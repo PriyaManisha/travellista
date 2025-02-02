@@ -59,7 +59,6 @@ class EntryDetailPage extends StatelessWidget {
           },
         ),
       ],
-      // The main content
       body: _buildDetailBody(context),
     );
   }
@@ -146,7 +145,7 @@ class EntryDetailPage extends StatelessWidget {
           return Container(
             height: 200,
             margin: const EdgeInsets.only(top: 8),
-            child: VideoPlayerWidget(videoUrl: url),
+            child: ChewieVideoPlayer(videoUrl: url),
           );
         }).toList(),
         const SizedBox(height: 16),
