@@ -10,16 +10,22 @@ class HomeScreenPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final journalProvider = context.watch<JournalEntryProvider>();
-    final entries = journalProvider.entries;
+    final entries = Provider.of<JournalEntryProvider>(context).entries;
 
     return SharedScaffold(
       title: 'Travellista',
-      body: ListView.builder(
+      body: entries.isNotEmpty
+      ? ListView.builder(
         itemCount: entries.length,
         itemBuilder: (context, index) {
           return EntryCard(entry: entries[index]);
         },
+      )
+          : const Center(
+        child: Text(
+          'No journal entries recorded yet.',
+          style: TextStyle(fontSize: 18),
+        ),
       ),
     );
   }
