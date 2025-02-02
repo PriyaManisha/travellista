@@ -4,7 +4,7 @@ import 'models/journal_entry.dart';
 class EntryCard extends StatelessWidget {
   final JournalEntry entry;
 
-  EntryCard({required this.entry});
+  EntryCard({super.key, required this.entry});
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +12,7 @@ class EntryCard extends StatelessWidget {
       child: ListTile(
         leading: entry.imageURLs!.isNotEmpty
             ? Image.network(
-                entry.imageURLs![0]) // Assuming first image as thumbnail
+                entry.imageURLs![0])
             : Icon(Icons.photo),
         title: Text(entry.title ?? 'Untitled'),
         subtitle:
