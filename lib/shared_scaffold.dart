@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:travellista/nav_bar.dart';
 
-// Scaffold wrapper that includes the navbar
+/// Scaffold wrapper that includes the navbar
 class SharedScaffold extends StatelessWidget {
   final Widget body;
   final String title;
@@ -19,7 +19,7 @@ class SharedScaffold extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
-        actions: actions, // <-- pass the list of actions to the AppBar
+        actions: actions,
       ),
       bottomNavigationBar: NavBar(),
       body: body,
