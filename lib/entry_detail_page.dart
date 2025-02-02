@@ -8,12 +8,19 @@ import 'package:travellista/shared_scaffold.dart';
 
 
 class EntryDetailPage extends StatelessWidget {
-  final JournalEntry entry;
+  // final JournalEntry entry;
+  final String entryID;
 
-  const EntryDetailPage({super.key, required this.entry});
+  const EntryDetailPage({super.key, required this.entryID});
 
   @override
   Widget build(BuildContext context) {
+    // Always grab the latest entry from the provider
+    final entry = context
+        .watch<JournalEntryProvider>()
+        .entries
+        .firstWhere((e) => e.entryID == entryID);
+
     return SharedScaffold(
       title: entry.title ?? 'Untitled',
       actions: [
@@ -37,8 +44,7 @@ class EntryDetailPage extends StatelessWidget {
               context: context,
               builder: (ctx) => AlertDialog(
                 title: const Text('Confirm Delete'),
-                content:
-                const Text('Are you sure you want to delete this entry?'),
+                content: const Text('Are you sure you want to delete this entry?'),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(ctx, false),
@@ -59,55 +65,55 @@ class EntryDetailPage extends StatelessWidget {
           },
         ),
       ],
-      body: _buildDetailBody(context),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: _buildDetailBody(context, entry),
+      ),
     );
   }
 
-  Widget _buildDetailBody(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Title
+  Widget _buildDetailBody(BuildContext context, JournalEntry entry) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Title
+        Text(
+          entry.title ?? 'Untitled',
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
+        const SizedBox(height: 8),
+
+        // Timestamp
+        if (entry.timestamp != null)
           Text(
-            entry.title ?? 'Untitled',
-            style: Theme.of(context).textTheme.headlineSmall,
+            'Date: ${entry.timestamp!.toLocal()}'.split(' ')[0],
+            style: const TextStyle(fontWeight: FontWeight.w500),
           ),
-          const SizedBox(height: 8),
+        const SizedBox(height: 8),
 
-          // Timestamp
-          if (entry.timestamp != null)
-            Text(
-              'Date: ${entry.timestamp!.toLocal()}'.split(' ')[0],
-              style: const TextStyle(fontWeight: FontWeight.w500),
+        // Description
+        if (entry.description != null && entry.description!.isNotEmpty)
+          Text(entry.description!),
+        const SizedBox(height: 16),
+
+        // Images
+        if (entry.imageURLs != null && entry.imageURLs!.isNotEmpty)
+          _buildImageSection(entry.imageURLs!),
+
+        // Videos
+        if (entry.videoURLs != null && entry.videoURLs!.isNotEmpty)
+          _buildVideoSection(entry.videoURLs!),
+
+        // Location
+        if (entry.latitude != null && entry.longitude != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 16.0),
+            child: Text(
+              'Location: ${entry.latitude}, ${entry.longitude}',
+              style: const TextStyle(fontStyle: FontStyle.italic),
             ),
-          const SizedBox(height: 8),
-
-          // Description
-          if (entry.description != null && entry.description!.isNotEmpty)
-            Text(entry.description!),
-          const SizedBox(height: 16),
-
-          // Images
-          if (entry.imageURLs != null && entry.imageURLs!.isNotEmpty)
-            _buildImageSection(entry.imageURLs!),
-
-          // Videos
-          if (entry.videoURLs != null && entry.videoURLs!.isNotEmpty)
-            _buildVideoSection(entry.videoURLs!),
-
-          // Location
-          if (entry.latitude != null && entry.longitude != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 16.0),
-              child: Text(
-                'Location: ${entry.latitude}, ${entry.longitude}',
-                style: const TextStyle(fontStyle: FontStyle.italic),
-              ),
-            ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 
@@ -139,9 +145,7 @@ class EntryDetailPage extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('Videos:', style: TextStyle(fontWeight: FontWeight.bold)),
-        // Map each video URL to a player widget or text placeholder
         ...videoURLs.map((url) {
-          // Use VideoPlayerWidget w/ .network. Update tomorrow, not working as a dependency
           return Container(
             height: 200,
             margin: const EdgeInsets.only(top: 8),

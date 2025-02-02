@@ -29,7 +29,7 @@ class EntryCard extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => EntryDetailPage(entry: entry),
+              builder: (context) => EntryDetailPage(entryID: entry.entryID!),
             ),
           );
         },
