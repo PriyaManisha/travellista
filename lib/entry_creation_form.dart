@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:travellista/models/journal_entry.dart';
 import 'package:travellista/providers/journal_entry_provider.dart';
 import 'package:travellista/util/storage_service.dart';
+import 'package:travellista/video_player_widget.dart';
 
 class EntryCreationForm extends StatefulWidget {
   final JournalEntry? existingEntry;
@@ -273,16 +274,12 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
       children: [
         const Text('New Videos:', style: TextStyle(fontWeight: FontWeight.bold)),
         SizedBox(
-          height: 100,
+          height: 200,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: _videoFiles.length,
             itemBuilder: (context, index) {
-              return Container(
-                width: 100,
-                alignment: Alignment.center,
-                child: Text('Video ${index + 1}'),
-              );
+              return ChewieVideoPlayer(videoFile: _videoFiles[index]);
             },
           ),
         ),
@@ -296,8 +293,15 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
             child: Text('Existing Videos:', style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
         if (_oldVideoURLs.isNotEmpty)
-          Column(
-            children: _oldVideoURLs.map((url) => Text(url)).toList(),
+          SizedBox(
+            height: 200,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _oldVideoURLs.length,
+              itemBuilder: (context, index) {
+                return ChewieVideoPlayer(videoUrl: _oldVideoURLs[index]);
+              },
+            ),
           ),
       ],
     );

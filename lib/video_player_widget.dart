@@ -4,9 +4,18 @@ import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
 
 class ChewieVideoPlayer extends StatefulWidget {
-  final String videoUrl;
+  final File? videoFile;
+  final String? videoUrl;
+  final double? width;
+  final double? height;
 
-  const ChewieVideoPlayer({Key? key, required this.videoUrl}) : super(key: key);
+  const ChewieVideoPlayer({
+    super.key,
+    this.videoFile,
+    this.videoUrl,
+    this.width,
+    this.height,
+  });
 
   @override
   _ChewieVideoPlayerState createState() => _ChewieVideoPlayerState();
@@ -15,21 +24,32 @@ class ChewieVideoPlayer extends StatefulWidget {
 class _ChewieVideoPlayerState extends State<ChewieVideoPlayer> {
   late VideoPlayerController _videoPlayerController;
   ChewieController? _chewieController;
+  bool _initialized = false;
 
   @override
   void initState() {
     super.initState();
-    _videoPlayerController = VideoPlayerController.network(widget.videoUrl);
-    _videoPlayerController.initialize().then((_) {
-      setState(() {}); // Update UI after initialization
-    });
 
-    _chewieController = ChewieController(
-      videoPlayerController: _videoPlayerController,
-      autoPlay: false,
-      looping: false,
-      // Additional configurations
-    );
+    if (widget.videoFile != null) {
+      // Local file
+      _videoPlayerController = VideoPlayerController.file(widget.videoFile!);
+    } else if (widget.videoUrl != null) {
+      // Network URL
+      _videoPlayerController = VideoPlayerController.network(widget.videoUrl!);
+    } else {
+      throw ArgumentError('Either file or url must be provided to ChewieVideoPlayerWidget.');
+    }
+
+    _videoPlayerController.initialize().then((_) {
+      _chewieController = ChewieController(
+        videoPlayerController: _videoPlayerController,
+        autoPlay: false,
+        looping: false,
+      );
+      setState(() {
+        _initialized = true;
+      });
+    });
   }
 
   @override
@@ -41,11 +61,13 @@ class _ChewieVideoPlayerState extends State<ChewieVideoPlayer> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_videoPlayerController.value.isInitialized) {
+    if (!_initialized) {
       return const Center(child: CircularProgressIndicator());
     }
-    return Chewie(
-      controller: _chewieController!,
+    return SizedBox(
+      width: widget.width ?? 200,
+      height: widget.height ?? 200,
+      child: Chewie(controller: _chewieController!),
     );
   }
 }
