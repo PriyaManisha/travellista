@@ -1,42 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:travellista/home_screen_page.dart';
-import 'package:travellista/util/theme_manager.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'package:travellista/entry_card.dart';
 import 'package:travellista/providers/journal_entry_provider.dart';
-import 'package:travellista/firebase_options.dart';
+import 'package:travellista/shared_scaffold.dart';
 
-void main() async {
-  // Initialize Firebase
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform, 
-  );
 
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class HomeScreenPage extends StatelessWidget {
+  const HomeScreenPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => JournalEntryProvider(),
-      child: ValueListenableBuilder<ThemeMode>(
-        valueListenable: ThemeManager.themeNotifier,
-        builder: (_, ThemeMode currentTheme, __) {
-          return MaterialApp(
-            title: 'Travellista',
-            theme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-              useMaterial3: true,
-            ),
-            darkTheme: ThemeData.dark(),
-            themeMode: currentTheme,
-            home: const HomeScreenPage(),
-          );
+    final entries = Provider.of<JournalEntryProvider>(context).entries;
+
+    return SharedScaffold(
+      title: 'Travellista',
+      body: entries.isNotEmpty
+      ? ListView.builder(
+        itemCount: entries.length,
+        itemBuilder: (context, index) {
+          return EntryCard(entry: entries[index]);
         },
+      )
+          : const Center(
+        child: Text(
+          'No journal entries recorded yet.',
+          style: TextStyle(fontSize: 18),
+        ),
       ),
     );
   }
