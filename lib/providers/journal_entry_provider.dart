@@ -22,7 +22,7 @@ class JournalEntryProvider extends ChangeNotifier {
       final mapData = doc.data();
       final entryFromMap = JournalEntry.fromMap(mapData);
 
-      // Overwrite the entryID with Firestore doc.id if needed:
+      // Overwrite entryID with Firestore doc.id:
       entryFromMap.entryID = doc.id;
 
       _entries.add(entryFromMap);
@@ -42,4 +42,37 @@ class JournalEntryProvider extends ChangeNotifier {
 
     notifyListeners();
   }
+
+  Future<void> updateEntry(String entryID, JournalEntry updatedEntry) async {
+    // Update in Firestore
+    await FirebaseFirestore.instance
+        .collection('journal_entries')
+        .doc(entryID)
+        .update(updatedEntry.toMap());
+
+    // Update locally
+    final index = _entries.indexWhere((e) => e.entryID == entryID);
+    if (index != -1) {
+      // Keep the same doc ID
+      final newUpdated = updatedEntry.copyWith(entryID: entryID);
+      _entries[index] = newUpdated;
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteEntry(String? entryID) async {
+    if (entryID == null) return;
+
+    // Delete from Firestore
+    await FirebaseFirestore.instance
+        .collection('journal_entries')
+        .doc(entryID)
+        .delete();
+
+    // Remove from list
+    _entries.removeWhere((entry) => entry.entryID == entryID);
+    notifyListeners();
+  }
 }
+
+
