@@ -1,37 +1,148 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'dart:io';
-import 'package:travellista/models/journal_entry.dart'; // Importing JournalEntry class
+import 'package:provider/provider.dart';
+import 'package:travellista/models/journal_entry.dart';
+import 'package:travellista/providers/journal_entry_provider.dart';
+import 'package:travellista/util/storage_service.dart';
 
 class EntryCreationForm extends StatefulWidget {
+  final JournalEntry? existingEntry;
+  const EntryCreationForm({super.key, this.existingEntry});
+
   @override
   _EntryCreationFormState createState() => _EntryCreationFormState();
 }
 
+
 class _EntryCreationFormState extends State<EntryCreationForm> {
   final _formKey = GlobalKey<FormState>();
+  final StorageService _storageService = StorageService();
+
+  // Controllers
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+
+  // State
   DateTime _selectedDate = DateTime.now();
-  LatLng _pickedLocation =
-      LatLng(37.7749, -122.4194); // Default to San Francisco
+  LatLng _pickedLocation = const LatLng(37.7749, -122.4194);
+
+  // For newly picked files only
   List<File> _imageFiles = [];
   List<File> _videoFiles = [];
-  final ImagePicker _picker = ImagePicker();
+
+  // For old remote URLs we want to keep
+  List<String> _oldImageURLs = [];
+  List<String> _oldVideoURLs = [];
+
+  bool get _isEditMode => widget.existingEntry != null;
+  final _picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isEditMode) {
+      final existing = widget.existingEntry!;
+      _titleController.text = existing.title ?? '';
+      _descriptionController.text = existing.description ?? '';
+      if (existing.timestamp != null) {
+        _selectedDate = existing.timestamp!;
+      }
+      if (existing.latitude != null && existing.longitude != null) {
+        _pickedLocation = LatLng(existing.latitude!, existing.longitude!);
+      }
+
+      // Keep old remote URLs so we can merge them if user doesn't replace
+      if (existing.imageURLs != null) {
+        _oldImageURLs = List.from(existing.imageURLs!);
+      }
+      if (existing.videoURLs != null) {
+        _oldVideoURLs = List.from(existing.videoURLs!);
+      }
+    }
+  }
+
+  // A simple helper to extract file extension
+  String _getFileExtension(String filePath) {
+    final dotIndex = filePath.lastIndexOf('.');
+    if (dotIndex == -1) return '';
+    return filePath.substring(dotIndex).toLowerCase();
+  }
+
+  Future<void> _saveEntry() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    // 1) Upload newly picked images
+    List<String> newImageURLs = [];
+    for (File imageFile in _imageFiles) {
+      final ext = _getFileExtension(imageFile.path); 
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}$ext';
+      final imageURL = await _storageService.uploadFile(
+        imageFile,
+        'images/$fileName',
+      );
+      newImageURLs.add(imageURL);
+      print('imageURL = $imageURL');
+    }
+
+    // 2) Upload newly picked videos
+    List<String> newVideoURLs = [];
+    for (File videoFile in _videoFiles) {
+      final ext = _getFileExtension(videoFile.path); 
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}$ext';
+      final videoURL = await _storageService.uploadFile(
+        videoFile,
+        'videos/$fileName',
+      );
+      newVideoURLs.add(videoURL);
+    }
+
+    // If we want to keep old URLs in addition to new ones
+    List<String> finalImageURLs = [..._oldImageURLs, ...newImageURLs];
+    List<String> finalVideoURLs = [..._oldVideoURLs, ...newVideoURLs];
+
+    // 3) Create or update the JournalEntry with full remote URLs
+    final updatedEntry = JournalEntry(
+      entryID: widget.existingEntry?.entryID,
+      userID: widget.existingEntry?.userID ?? 'some_user_id',
+      title: _titleController.text,
+      description: _descriptionController.text,
+      timestamp: _selectedDate,
+      latitude: _pickedLocation.latitude,
+      longitude: _pickedLocation.longitude,
+      imageURLs: finalImageURLs,
+      videoURLs: finalVideoURLs,
+    );
+
+    final provider = context.read<JournalEntryProvider>();
+
+    if (_isEditMode) {
+      await provider.updateEntry(updatedEntry.entryID!, updatedEntry);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Entry updated successfully!')),
+      );
+    } else {
+      await provider.addEntry(updatedEntry);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Entry saved successfully!')),
+      );
+    }
+
+    Navigator.pop(context);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Create New Entry'),
+        title: Text(_isEditMode ? 'Edit Entry' : 'Create New Entry'),
       ),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
           child: Column(
-            children: <Widget>[
+            children: [
               _buildTitleField(),
               _buildDescriptionField(),
               _buildDatePicker(),
@@ -40,7 +151,7 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
               _buildVideoPicker(),
               ElevatedButton(
                 onPressed: _saveEntry,
-                child: Text('Save Entry'),
+                child: Text(_isEditMode ? 'Update Entry' : 'Save Entry'),
               ),
             ],
           ),
@@ -49,23 +160,23 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
     );
   }
 
+  //-------------------------------------------------------------------------
+  // UI WIDGETS
+  //-------------------------------------------------------------------------
+
   Widget _buildTitleField() {
     return TextFormField(
       controller: _titleController,
-      decoration: InputDecoration(labelText: 'Title'),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Please enter a title';
-        }
-        return null;
-      },
+      decoration: const InputDecoration(labelText: 'Title'),
+      validator: (value) =>
+      (value == null || value.isEmpty) ? 'Please enter a title' : null,
     );
   }
 
   Widget _buildDescriptionField() {
     return TextFormField(
       controller: _descriptionController,
-      decoration: InputDecoration(labelText: 'Description'),
+      decoration: const InputDecoration(labelText: 'Description'),
       maxLines: 3,
     );
   }
@@ -73,13 +184,13 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
   Widget _buildDatePicker() {
     return ListTile(
       title: Text('Date: ${_selectedDate.toLocal()}'.split(' ')[0]),
-      trailing: Icon(Icons.calendar_today),
+      trailing: const Icon(Icons.calendar_today),
       onTap: _pickDate,
     );
   }
 
   Future<void> _pickDate() async {
-    DateTime? pickedDate = await showDatePicker(
+    final pickedDate = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2000),
@@ -95,24 +206,24 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
   Widget _buildLocationPicker() {
     return ListTile(
       title: Text(
-          'Location: ${_pickedLocation.latitude}, ${_pickedLocation.longitude}'),
-      trailing: Icon(Icons.map),
-      onTap: _pickLocation,
+        'Location: ${_pickedLocation.latitude}, ${_pickedLocation.longitude}',
+      ),
+      trailing: const Icon(Icons.map),
+      onTap: () {
+        // Just placeholder logic
+        setState(() {
+          _pickedLocation = const LatLng(34.0522, -118.2437);
+        });
+      },
     );
-  }
-
-  Future<void> _pickLocation() async {
-    // Implement your logic for location picking here
-    // This example is a placeholder
-    setState(() {
-      _pickedLocation = LatLng(34.0522, -118.2437); // Simulated picked location
-    });
   }
 
   Widget _buildImagePicker() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
+        const Text('New Images:', style: TextStyle(fontWeight: FontWeight.bold)),
+        SizedBox(
           height: 100,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
@@ -124,8 +235,25 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
         ),
         ElevatedButton(
           onPressed: _pickImage,
-          child: Text('Add Image'),
+          child: const Text('Add Image'),
         ),
+        if (_oldImageURLs.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Text('Existing Images:', style: const TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        if (_oldImageURLs.isNotEmpty)
+          SizedBox(
+            height: 100,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _oldImageURLs.length,
+              itemBuilder: (context, index) {
+                final url = _oldImageURLs[index];
+                return Image.network(url);
+              },
+            ),
+          ),
       ],
     );
   }
@@ -141,25 +269,36 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
 
   Widget _buildVideoPicker() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
+        const Text('New Videos:', style: TextStyle(fontWeight: FontWeight.bold)),
+        SizedBox(
           height: 100,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: _videoFiles.length,
             itemBuilder: (context, index) {
-              // Display video thumbnail or an indicator
               return Container(
                 width: 100,
-                child: Center(child: Text('Video ${index + 1}')),
+                alignment: Alignment.center,
+                child: Text('Video ${index + 1}'),
               );
             },
           ),
         ),
         ElevatedButton(
           onPressed: _pickVideo,
-          child: Text('Add Video'),
+          child: const Text('Add Video'),
         ),
+        if (_oldVideoURLs.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Text('Existing Videos:', style: const TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        if (_oldVideoURLs.isNotEmpty)
+          Column(
+            children: _oldVideoURLs.map((url) => Text(url)).toList(),
+          ),
       ],
     );
   }
@@ -170,38 +309,6 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
       setState(() {
         _videoFiles.add(File(pickedFile.path));
       });
-    }
-  }
-
-  // Method Definitions for form fields, date picker, and image picker...
-
-  Future<void> _saveEntry() async {
-    if (_formKey.currentState!.validate()) {
-      // Create an instance of JournalEntry using the collected data
-      JournalEntry newEntry = JournalEntry(
-        entryID: null, // Firestore will auto-generate this on save
-        userID:
-            'your_user_id_here', // Replace with actual user ID as per your logic
-        title: _titleController.text,
-        description: _descriptionController.text,
-        timestamp:
-            _selectedDate, // You may want to convert to appropriate type if needed
-        latitude: _pickedLocation.latitude,
-        longitude: _pickedLocation.longitude,
-        imageURLs: _imageFiles
-            .map((file) => file.path)
-            .toList(), // Assuming you have URLs
-      );
-
-      // Save to Firestore
-      await FirebaseFirestore.instance
-          .collection('journal_entries')
-          .add(newEntry.toMap());
-
-      // Optionally, show a confirmation message or navigate back
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Entry saved successfully!')));
-      Navigator.pop(context); // Go back to the previous screen
     }
   }
 }

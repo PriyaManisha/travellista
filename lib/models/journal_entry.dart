@@ -1,3 +1,4 @@
+// JournalEntry Model
 class JournalEntry {
   String? _entryID;
   String _userID;
@@ -170,5 +171,31 @@ class JournalEntry {
         'videoURLs: $_videoURLs, '
         'tags: $_tags'
         '}';
+  }
+
+  JournalEntry copyWith({
+    String? entryID,
+    String? userID,
+    DateTime? timestamp,
+    double? latitude,
+    double? longitude,
+    String? title,
+    String? description,
+    List<String>? imageURLs,
+    List<String>? videoURLs,
+    List<String>? tags,
+  }) {
+    return JournalEntry(
+      entryID: entryID ?? this.entryID,
+      userID: userID ?? this.userID,
+      timestamp: timestamp ?? this.timestamp,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      imageURLs: imageURLs ?? this.imageURLs,
+      videoURLs: videoURLs ?? this.videoURLs,
+      tags: tags ?? this.tags,
+    );
   }
 }
