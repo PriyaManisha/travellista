@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'models/journal_entry.dart';
+import 'package:intl/intl.dart';
+import 'package:travellista/models/journal_entry.dart';
+import 'package:travellista/entry_detail_page.dart';
 
 class EntryCard extends StatelessWidget {
   final JournalEntry entry;
@@ -8,7 +10,13 @@ class EntryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final formatter = DateFormat('MM/dd/yyyy HH:mm');
+    final formattedDate = formatter.format(entry.timestamp!);
+    final formattedLocation =
+        '${entry.latitude}, ${entry.longitude}';
+
     return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       child: ListTile(
         leading: entry.imageURLs!.isNotEmpty
             ? Image.network(
@@ -16,9 +24,14 @@ class EntryCard extends StatelessWidget {
             : Icon(Icons.photo),
         title: Text(entry.title ?? 'Untitled'),
         subtitle:
-            Text('${entry.timestamp}, ${entry.latitude}, ${entry.longitude}'),
+            Text('${formattedDate}, ${formattedLocation}'),
         onTap: () {
-          // Navigate to EntryDetailsScreen
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => EntryDetailPage(entry: entry),
+            ),
+          );
         },
       ),
     );
