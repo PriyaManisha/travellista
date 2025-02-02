@@ -147,8 +147,8 @@ class EntryDetailPage extends StatelessWidget {
             height: 200,
             margin: const EdgeInsets.only(top: 8),
             // TODO: Replace with usage of a custom video widget:
-            // child: VideoPlayerWidget(videoUrl: url),
-            child: Center(child: Text('Video: $url')),
+            child: VideoPlayerWidget(videoUrl: url),
+            //child: Center(child: Text('Video: $url')),
           );
         }).toList(),
         const SizedBox(height: 16),

@@ -53,4 +53,8 @@ android/app/google-services.json
 ios/Pods/
 ios/.symlinks/
 ios/Flutter/
-lib/generated_plugin_registrant.dart
+lib/generated_plugin_registrant.dartios/Flutter/
+ios/Runner.xcworkspace/
+ios/Podfile.lock
+macos/Flutter/
+windows/flutter/
