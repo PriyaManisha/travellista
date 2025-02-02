@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:io';
-import 'package:travellista/models/journal_entry.dart'; // Importing JournalEntry class
+import 'package:travellista/models/journal_entry.dart';
+import 'package:provider/provider.dart';
+import 'package:travellista/providers/journal_entry_provider.dart';
 
 class EntryCreationForm extends StatefulWidget {
   @override
@@ -15,8 +16,7 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
-  LatLng _pickedLocation =
-      LatLng(37.7749, -122.4194); // Default to San Francisco
+  LatLng _pickedLocation = LatLng(37.7749, -122.4194);
   List<File> _imageFiles = [];
   List<File> _videoFiles = [];
   final ImagePicker _picker = ImagePicker();
@@ -48,6 +48,37 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
       ),
     );
   }
+
+  Future<void> _saveEntry() async {
+    if (_formKey.currentState!.validate()) {
+      // Create JournalEntry object from the form fields
+      final newEntry = JournalEntry(
+        entryID: null,
+        userID: 'some_user_id', // Replace with real user logic as needed
+        title: _titleController.text,
+        description: _descriptionController.text,
+        timestamp: _selectedDate,
+        latitude: _pickedLocation.latitude,
+        longitude: _pickedLocation.longitude,
+        imageURLs: _imageFiles.map((file) => file.path).toList(),
+        videoURLs: _videoFiles.map((file) => file.path).toList(),
+        // tags: [...]
+      );
+
+      // Call provider's addEntry method
+      await context.read<JournalEntryProvider>().addEntry(newEntry);
+
+      // Display success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Entry saved successfully!')),
+      );
+
+      // Pop back to home
+      Navigator.pop(context);
+    }
+  }
+
+  // Method Definitions for form fields, date picker, and image picker...
 
   Widget _buildTitleField() {
     return TextFormField(
@@ -102,10 +133,9 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
   }
 
   Future<void> _pickLocation() async {
-    // Implement your logic for location picking here
-    // This example is a placeholder
+    // This example is a placeholder and will be replaced in next milestone
     setState(() {
-      _pickedLocation = LatLng(34.0522, -118.2437); // Simulated picked location
+      _pickedLocation = LatLng(34.0522, -118.2437);
     });
   }
 
@@ -170,38 +200,6 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
       setState(() {
         _videoFiles.add(File(pickedFile.path));
       });
-    }
-  }
-
-  // Method Definitions for form fields, date picker, and image picker...
-
-  Future<void> _saveEntry() async {
-    if (_formKey.currentState!.validate()) {
-      // Create an instance of JournalEntry using the collected data
-      JournalEntry newEntry = JournalEntry(
-        entryID: null, // Firestore will auto-generate this on save
-        userID:
-            'your_user_id_here', // Replace with actual user ID as per your logic
-        title: _titleController.text,
-        description: _descriptionController.text,
-        timestamp:
-            _selectedDate, // You may want to convert to appropriate type if needed
-        latitude: _pickedLocation.latitude,
-        longitude: _pickedLocation.longitude,
-        imageURLs: _imageFiles
-            .map((file) => file.path)
-            .toList(), // Assuming you have URLs
-      );
-
-      // Save to Firestore
-      await FirebaseFirestore.instance
-          .collection('journal_entries')
-          .add(newEntry.toMap());
-
-      // Optionally, show a confirmation message or navigate back
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Entry saved successfully!')));
-      Navigator.pop(context); // Go back to the previous screen
     }
   }
 }
