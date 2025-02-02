@@ -76,7 +76,7 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
     // 1) Upload newly picked images
     List<String> newImageURLs = [];
     for (File imageFile in _imageFiles) {
-      final ext = _getFileExtension(imageFile.path); // e.g. ".jpg"
+      final ext = _getFileExtension(imageFile.path); 
       final fileName = '${DateTime.now().millisecondsSinceEpoch}$ext';
       final imageURL = await _storageService.uploadFile(
         imageFile,
@@ -89,7 +89,7 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
     // 2) Upload newly picked videos
     List<String> newVideoURLs = [];
     for (File videoFile in _videoFiles) {
-      final ext = _getFileExtension(videoFile.path); // e.g. ".mp4"
+      final ext = _getFileExtension(videoFile.path); 
       final fileName = '${DateTime.now().millisecondsSinceEpoch}$ext';
       final videoURL = await _storageService.uploadFile(
         videoFile,
@@ -98,8 +98,7 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
       newVideoURLs.add(videoURL);
     }
 
-    // If we want to keep old URLs (user didn't remove them)
-    // merge old + new. If you want to discard old URLs, skip this step.
+    // If we want to keep old URLs in addition to new ones
     List<String> finalImageURLs = [..._oldImageURLs, ...newImageURLs];
     List<String> finalVideoURLs = [..._oldVideoURLs, ...newVideoURLs];
 
