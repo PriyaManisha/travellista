@@ -10,7 +10,7 @@ class EntryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final formatter = DateFormat('MM/dd/yyyy HH:mm');
+    final formatter = DateFormat('MM/dd/yyyy');
     final formattedDate = formatter.format(entry.timestamp!);
     final formattedLocation =
         '${entry.latitude}, ${entry.longitude}';

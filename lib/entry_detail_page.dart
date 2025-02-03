@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:travellista/models/journal_entry.dart';
 import 'package:travellista/providers/journal_entry_provider.dart';
@@ -75,17 +76,11 @@ class EntryDetailPage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Title
-        Text(
-          entry.title ?? 'Untitled',
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
-        const SizedBox(height: 8),
 
         // Timestamp
         if (entry.timestamp != null)
           Text(
-            'Date: ${entry.timestamp!.toLocal()}'.split(' ')[0],
+            'Date: ${DateFormat('MM/dd/yyyy').format(entry.timestamp!)}',
             style: const TextStyle(fontWeight: FontWeight.w500),
           ),
         const SizedBox(height: 8),
