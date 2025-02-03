@@ -130,12 +130,52 @@ class EntryDetailPage extends StatelessWidget {
             separatorBuilder: (_, __) => const SizedBox(width: 8),
             itemBuilder: (context, index) {
               final url = imageURLs[index];
-              return Image.network(url, width: 100, fit: BoxFit.cover);
+              return GestureDetector(
+                onTap: () => _showFullscreenImage(context, url),
+                child: Image.network(url, width: 100, fit: BoxFit.cover),
+              );
             },
           ),
         ),
         const SizedBox(height: 16),
       ],
+    );
+  }
+
+  void _showFullscreenImage(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Stack(
+            children: [
+              InteractiveViewer(
+                minScale: 0.8,
+                maxScale: 4.0,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    imageUrl,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+              // Close button in the corner
+              Positioned(
+                top: 0,
+                right: 0,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () => Navigator.of(ctx).pop(),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
