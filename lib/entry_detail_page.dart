@@ -8,14 +8,13 @@ import 'package:travellista/shared_scaffold.dart';
 
 
 class EntryDetailPage extends StatelessWidget {
-  // final JournalEntry entry;
   final String entryID;
 
   const EntryDetailPage({super.key, required this.entryID});
 
   @override
   Widget build(BuildContext context) {
-    // Always grab the latest entry from the provider
+    // Grab latest entry from the provider
     final entry = context
         .watch<JournalEntryProvider>()
         .entries
@@ -60,7 +59,7 @@ class EntryDetailPage extends StatelessWidget {
 
             if (confirmed == true) {
               await context.read<JournalEntryProvider>().deleteEntry(entry.entryID);
-              Navigator.pop(context); // go back after deleting
+              Navigator.pop(context);
             }
           },
         ),
@@ -96,14 +95,6 @@ class EntryDetailPage extends StatelessWidget {
           Text(entry.description!),
         const SizedBox(height: 16),
 
-        // Images
-        if (entry.imageURLs != null && entry.imageURLs!.isNotEmpty)
-          _buildImageSection(entry.imageURLs!),
-
-        // Videos
-        if (entry.videoURLs != null && entry.videoURLs!.isNotEmpty)
-          _buildVideoSection(entry.videoURLs!),
-
         // Location
         if (entry.latitude != null && entry.longitude != null)
           Padding(
@@ -113,6 +104,14 @@ class EntryDetailPage extends StatelessWidget {
               style: const TextStyle(fontStyle: FontStyle.italic),
             ),
           ),
+
+        // Images
+        if (entry.imageURLs != null && entry.imageURLs!.isNotEmpty)
+          _buildImageSection(entry.imageURLs!),
+
+        // Videos
+        if (entry.videoURLs != null && entry.videoURLs!.isNotEmpty)
+          _buildVideoSection(entry.videoURLs!),
       ],
     );
   }
@@ -145,14 +144,21 @@ class EntryDetailPage extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('Videos:', style: TextStyle(fontWeight: FontWeight.bold)),
-        ...videoURLs.map((url) {
-          return Container(
-            height: 200,
-            margin: const EdgeInsets.only(top: 8),
-            child: ChewieVideoPlayer(videoUrl: url),
-          );
-        }).toList(),
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
+        ListView.builder(
+          // Fixed-height vert list
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: videoURLs.length,
+          itemBuilder: (context, index) {
+            final url = videoURLs[index];
+            return Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              constraints: const BoxConstraints(maxHeight: 200),
+              child: ChewieVideoPlayer(videoUrl: url),
+            );
+          },
+        ),
       ],
     );
   }

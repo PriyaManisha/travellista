@@ -10,4 +10,13 @@ class StorageService {
     // Once complete, get download URL
     return await uploadTask.ref.getDownloadURL();
   }
+
+  Future<void> deleteFileByUrl(String url) async {
+    try {
+      final ref = FirebaseStorage.instance.refFromURL(url);
+      await ref.delete();
+    } catch (e) {
+      print('Failed to delete file at $url: $e');
+    }
+  }
 }

@@ -22,9 +22,10 @@ class ChewieVideoPlayer extends StatefulWidget {
 }
 
 class _ChewieVideoPlayerState extends State<ChewieVideoPlayer> {
+  bool _initialized = false;
   late VideoPlayerController _videoPlayerController;
   ChewieController? _chewieController;
-  bool _initialized = false;
+
 
   @override
   void initState() {
@@ -45,6 +46,10 @@ class _ChewieVideoPlayerState extends State<ChewieVideoPlayer> {
         videoPlayerController: _videoPlayerController,
         autoPlay: false,
         looping: false,
+        autoInitialize: false,
+        showControlsOnInitialize: false,
+        allowMuting: false,
+        allowFullScreen: false,
       );
       setState(() {
         _initialized = true;
