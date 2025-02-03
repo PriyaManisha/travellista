@@ -4,6 +4,7 @@ import 'package:travellista/models/journal_entry.dart';
 void main() {
   group('JournalEntry Model Tests', () {
     test('Constructor and property assignment', () {
+      // setup / given / arrange : a test entry
       final entry = JournalEntry(
         entryID: '123',
         userID: 'userABC',

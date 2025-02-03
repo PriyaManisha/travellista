@@ -20,7 +20,6 @@ class EntryCreationForm extends StatefulWidget {
 
 class _EntryCreationFormState extends State<EntryCreationForm> {
   final _formKey = GlobalKey<FormState>();
-  //final StorageService _storageService = StorageService();
   late final StorageService _storageService;
 
   // Controllers

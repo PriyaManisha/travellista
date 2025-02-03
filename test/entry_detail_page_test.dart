@@ -10,7 +10,7 @@ void main() {
   testWidgets(
     'Confirm EntryDetailPage shows the entry title, date, description',
         (WidgetTester tester) async {
-      // Arrange
+          // setup / given / arrange : fake provider and a test entry
       final provider = FakeJournalEntryProvider();
       final testEntry = JournalEntry(
         entryID: 'abc123',
