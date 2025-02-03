@@ -48,8 +48,8 @@ class _ChewieVideoPlayerState extends State<ChewieVideoPlayer> {
         looping: false,
         autoInitialize: false,
         showControlsOnInitialize: false,
-        allowMuting: false,
-        allowFullScreen: false,
+        allowMuting: true,
+        allowFullScreen: true,
       );
       setState(() {
         _initialized = true;
