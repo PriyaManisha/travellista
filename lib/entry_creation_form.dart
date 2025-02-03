@@ -246,7 +246,7 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
   // IMAGE PICKER + REMOVAL
   //-------------------------------------------------------------------------
 
-  Widget _buildImagePicker() {
+  Widget _buildNewImagesSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -258,25 +258,13 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
             itemCount: _imageFiles.length,
             itemBuilder: (context, index) {
               final file = _imageFiles[index];
-              return Stack(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: Image.file(file),
-                  ),
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: IconButton(
-                      icon: const Icon(Icons.close, color: Colors.red),
-                      onPressed: () {
-                        setState(() {
-                          _imageFiles.removeAt(index);
-                        });
-                      },
-                    ),
-                  ),
-                ],
+              return _buildRemovableThumbnail(
+                child: Image.file(file),
+                onRemove: () {
+                  setState(() {
+                    _imageFiles.removeAt(index);
+                  });
+                },
               );
             },
           ),
@@ -285,45 +273,73 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
           onPressed: _pickImage,
           child: const Text('Add Image'),
         ),
-        if (_oldImageURLs.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          const Text('Existing Images:', style: TextStyle(fontWeight: FontWeight.bold)),
-          SizedBox(
-            height: 100,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: _oldImageURLs.length,
-              itemBuilder: (context, index) {
-                final url = _oldImageURLs[index];
-                return Stack(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: Image.network(url),
-                    ),
-                    Positioned(
-                      top: 0,
-                      right: 0,
-                      child: IconButton(
-                        icon: const Icon(Icons.close, color: Colors.red),
-                        onPressed: () {
-                          // Remove from the old list and mark as removed
-                          setState(() {
-                            _removedOldImageURLs.add(url);
-                            _oldImageURLs.remove(url);
-                          });
-                        },
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-        ],
       ],
     );
   }
+
+  Widget _buildExistingImagesSection() {
+    if (_oldImageURLs.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 8),
+        const Text('Existing Images:', style: TextStyle(fontWeight: FontWeight.bold)),
+        SizedBox(
+          height: 100,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: _oldImageURLs.length,
+            itemBuilder: (context, index) {
+              final url = _oldImageURLs[index];
+              return _buildRemovableThumbnail(
+                child: Image.network(url),
+                onRemove: () {
+                  setState(() {
+                    _removedOldImageURLs.add(url);
+                    _oldImageURLs.remove(url);
+                  });
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRemovableThumbnail({
+    required Widget child,
+    required VoidCallback onRemove,
+  }) {
+    return Stack(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(right: 8.0),
+          child: child,
+        ),
+        Positioned(
+          top: 0,
+          right: 0,
+          child: IconButton(
+            icon: const Icon(Icons.close, color: Colors.red),
+            onPressed: onRemove,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImagePicker() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildNewImagesSection(),
+        _buildExistingImagesSection(),
+      ],
+    );
+  }
+
 
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
@@ -338,7 +354,7 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
   // VIDEO PICKER + REMOVAL
   //-------------------------------------------------------------------------
 
-  Widget _buildVideoPicker() {
+  Widget _buildNewVideosSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -350,32 +366,19 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
             itemCount: _videoFiles.length,
             itemBuilder: (context, index) {
               final file = _videoFiles[index];
-              return Stack(
-                children: [
-                  // Constrain each video to a fixed width to avoid overflow
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: SizedBox(
-                      width: 200,
-                      child: AspectRatio(
-                        aspectRatio: 16 / 9,
-                        child: ChewieVideoPlayer(videoFile: file),
-                      ),
-                    ),
+              return _buildRemovableVideo(
+                child: SizedBox(
+                  width: 200,
+                  child: AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: ChewieVideoPlayer(videoFile: file),
                   ),
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: IconButton(
-                      icon: const Icon(Icons.close, color: Colors.red),
-                      onPressed: () {
-                        setState(() {
-                          _videoFiles.removeAt(index);
-                        });
-                      },
-                    ),
-                  ),
-                ],
+                ),
+                onRemove: () {
+                  setState(() {
+                    _videoFiles.removeAt(index);
+                  });
+                },
               );
             },
           ),
@@ -384,50 +387,79 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
           onPressed: _pickVideo,
           child: const Text('Add Video'),
         ),
-        if (_oldVideoURLs.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          const Text('Existing Videos:', style: TextStyle(fontWeight: FontWeight.bold)),
-          SizedBox(
-            height: 200,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: _oldVideoURLs.length,
-              itemBuilder: (context, index) {
-                final url = _oldVideoURLs[index];
-                return Stack(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: SizedBox(
-                        width: 200,
-                        child: AspectRatio(
-                          aspectRatio: 16 / 9,
-                          child: ChewieVideoPlayer(videoUrl: url),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 0,
-                      right: 0,
-                      child: IconButton(
-                        icon: const Icon(Icons.close, color: Colors.red),
-                        onPressed: () {
-                          setState(() {
-                            _removedOldVideoURLs.add(url);
-                            _oldVideoURLs.remove(url);
-                          });
-                        },
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-        ],
       ],
     );
   }
+
+  Widget _buildExistingVideosSection() {
+    if (_oldVideoURLs.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 8),
+        const Text('Existing Videos:', style: TextStyle(fontWeight: FontWeight.bold)),
+        SizedBox(
+          height: 200,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: _oldVideoURLs.length,
+            itemBuilder: (context, index) {
+              final url = _oldVideoURLs[index];
+              return _buildRemovableVideo(
+                child: SizedBox(
+                  width: 200,
+                  child: AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: ChewieVideoPlayer(videoUrl: url),
+                  ),
+                ),
+                onRemove: () {
+                  setState(() {
+                    _removedOldVideoURLs.add(url);
+                    _oldVideoURLs.remove(url);
+                  });
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRemovableVideo({
+    required Widget child,
+    required VoidCallback onRemove,
+  }) {
+    return Stack(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(right: 8.0),
+          child: child,
+        ),
+        Positioned(
+          top: 0,
+          right: 0,
+          child: IconButton(
+            icon: const Icon(Icons.close, color: Colors.red),
+            onPressed: onRemove,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVideoPicker() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildNewVideosSection(),
+        _buildExistingVideosSection(),
+      ],
+    );
+  }
+
 
   Future<void> _pickVideo() async {
     final pickedFile = await _picker.pickVideo(source: ImageSource.gallery);
