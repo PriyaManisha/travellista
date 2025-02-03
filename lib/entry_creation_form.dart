@@ -10,7 +10,9 @@ import 'package:travellista/video_player_widget.dart';
 
 class EntryCreationForm extends StatefulWidget {
   final JournalEntry? existingEntry;
-  const EntryCreationForm({Key? key, this.existingEntry}) : super(key: key);
+  final StorageService? storageOverride;
+
+  const EntryCreationForm({super.key, this.existingEntry, this.storageOverride});
 
   @override
   _EntryCreationFormState createState() => _EntryCreationFormState();
@@ -18,7 +20,8 @@ class EntryCreationForm extends StatefulWidget {
 
 class _EntryCreationFormState extends State<EntryCreationForm> {
   final _formKey = GlobalKey<FormState>();
-  final StorageService _storageService = StorageService();
+  //final StorageService _storageService = StorageService();
+  late final StorageService _storageService;
 
   // Controllers
   final TextEditingController _titleController = TextEditingController();
@@ -46,6 +49,7 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
   @override
   void initState() {
     super.initState();
+    _storageService = widget.storageOverride ?? StorageService();
     if (_isEditMode) {
       final existing = widget.existingEntry!;
       _titleController.text = existing.title ?? '';
