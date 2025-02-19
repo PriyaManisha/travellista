@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:travellista/settings.dart';
+import 'package:travellista/profile.dart';
 import 'package:travellista/entry_creation_form.dart';
 import 'package:travellista/home_screen_page.dart';
 
@@ -34,7 +34,7 @@ class _NavBarState extends State<NavBar> {
       case 2:
       // Navigate to Settings
         Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const SettingsPage())
+            MaterialPageRoute(builder: (context) => const ProfilePage())
         );
         break;
     }
@@ -55,8 +55,8 @@ class _NavBarState extends State<NavBar> {
           label: 'Create',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.settings),
-          label: 'Settings',
+          icon: Icon(Icons.person),
+          label: 'Profile',
         ),
       ],
     );
