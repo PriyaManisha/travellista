@@ -42,6 +42,9 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
   final List<String> _removedOldImageURLs = [];
   final List<String> _removedOldVideoURLs = [];
 
+  // Track saving state
+  bool _isSaving = false;
+
   bool get _isEditMode => widget.existingEntry != null;
   final _picker = ImagePicker();
 
@@ -79,6 +82,9 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
   Future<void> _saveEntry() async {
     if (!_formKey.currentState!.validate()) return;
 
+    setState(() => _isSaving = true);
+
+    try {
     // 1. Upload newly picked images
     final newImageURLs = <String>[];
     for (File imageFile in _imageFiles) {
@@ -147,47 +153,69 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
     }
 
     Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error saving entry')),
+      );
+    } finally {
+      setState(() => _isSaving = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      appBar: AppBar(
-        title: Text(_isEditMode ? 'Edit Entry' : 'Create New Entry'),
-      ),
-      body: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: SingleChildScrollView(
-          padding: EdgeInsets.only(
-            left: 16.0,
-            right: 16.0,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+    return Stack(
+      children: [
+        // Main Scaffold underneath
+        Scaffold(
+          resizeToAvoidBottomInset: true,
+          appBar: AppBar(
+            title: Text(_isEditMode ? 'Edit Entry' : 'Create New Entry'),
           ),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                _buildTitleField(),
-                _buildDescriptionField(),
-                _buildDatePicker(),
-                _buildLocationPicker(),
-                const SizedBox(height: 8),
-                _buildImagePicker(),
-                const SizedBox(height: 8),
-                _buildVideoPicker(),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: _saveEntry,
-                  child: Text(_isEditMode ? 'Update Entry' : 'Save Entry'),
+          body: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () => FocusScope.of(context).unfocus(),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.only(
+                left: 16.0,
+                right: 16.0,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+              ),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    _buildTitleField(),
+                    _buildDescriptionField(),
+                    _buildDatePicker(),
+                    _buildLocationPicker(),
+                    const SizedBox(height: 8),
+                    _buildImagePicker(),
+                    const SizedBox(height: 8),
+                    _buildVideoPicker(),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: _saveEntry,
+                      child: Text(_isEditMode ? 'Update Entry' : 'Save Entry'),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
                 ),
-                const SizedBox(height: 20),
-              ],
+              ),
             ),
           ),
         ),
-      ),
+
+        if (_isSaving)
+          Container(
+            color: Colors.black54,
+            child: const Center(
+              child: CircularProgressIndicator(
+                color: Colors.white,
+              ),
+            ),
+          ),
+      ],
     );
   }
 

@@ -19,8 +19,12 @@ class EntryCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       child: ListTile(
         leading: entry.imageURLs!.isNotEmpty
-            ? Image.network(
-                entry.imageURLs![0])
+            ? Image.network((
+                entry.imageURLs![0]),
+                loadingBuilder: (context, child, progress) {
+                  if (progress == null) return child;
+                  return const Center(child: CircularProgressIndicator());
+                },)
             : Icon(Icons.photo),
         title: Text(entry.title ?? 'Untitled'),
         subtitle:

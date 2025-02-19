@@ -5,6 +5,8 @@ import 'package:travellista/models/journal_entry.dart';
 class JournalEntryProvider extends ChangeNotifier {
   final List<JournalEntry> _entries = [];
   List<JournalEntry> get entries => _entries;
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
 
   // Fetch from Firestore when providers is created
   JournalEntryProvider() {
@@ -12,6 +14,9 @@ class JournalEntryProvider extends ChangeNotifier {
   }
 
   Future<void> fetchEntries() async {
+    _isLoading = true;
+    notifyListeners();
+
     _entries.clear();
     final querySnapshot = await FirebaseFirestore.instance
         .collection('journal_entries')
@@ -27,6 +32,7 @@ class JournalEntryProvider extends ChangeNotifier {
 
       _entries.add(entryFromMap);
     }
+    _isLoading = false;
     notifyListeners();
   }
 

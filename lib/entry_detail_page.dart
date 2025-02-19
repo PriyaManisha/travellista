@@ -7,68 +7,116 @@ import 'package:travellista/entry_creation_form.dart';
 import 'package:travellista/video_player_widget.dart';
 import 'package:travellista/shared_scaffold.dart';
 
-
-class EntryDetailPage extends StatelessWidget {
+class EntryDetailPage extends StatefulWidget {
   final String entryID;
 
-  const EntryDetailPage({super.key, required this.entryID});
+  const EntryDetailPage({Key? key, required this.entryID}) : super(key: key);
+
+  @override
+  State<EntryDetailPage> createState() => _EntryDetailPageState();
+}
+
+class _EntryDetailPageState extends State<EntryDetailPage> {
+  JournalEntry? _entry;
+  bool _isDeleting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final provider = context.read<JournalEntryProvider>();
+    // If entry is not found, _entry remains null
+    _entry = provider.entries
+        .where((e) => e.entryID == widget.entryID)
+        .isNotEmpty
+        ? provider.entries.firstWhere((e) => e.entryID == widget.entryID)
+        : null;
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Grab latest entry from the provider
-    final entry = context
-        .watch<JournalEntryProvider>()
-        .entries
-        .firstWhere((e) => e.entryID == entryID);
+    // If somehow entry is null, we can show an error or pop immediately
+    if (_entry == null) {
+      // For safety, just show something or pop
+      return Scaffold(
+        appBar: AppBar(title: const Text('Entry Not Found')),
+        body: const Center(child: Text('No entry found.')),
+      );
+    }
 
-    return SharedScaffold(
-      title: entry.title ?? 'Untitled',
-      actions: [
-        // Edit button
-        IconButton(
-          icon: const Icon(Icons.edit),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => EntryCreationForm(existingEntry: entry),
-              ),
-            );
-          },
-        ),
-        // Delete button
-        IconButton(
-          icon: const Icon(Icons.delete),
-          onPressed: () async {
-            final confirmed = await showDialog<bool>(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                title: const Text('Confirm Delete'),
-                content: const Text('Are you sure you want to delete this entry?'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx, false),
-                    child: const Text('Cancel'),
+    return Stack(
+      children: [
+        // Normal UI behind
+        SharedScaffold(
+          title: _entry!.title ?? 'Untitled',
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EntryCreationForm(existingEntry: _entry),
                   ),
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx, true),
-                    child: const Text('Delete'),
+                );
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Confirm Delete'),
+                    content: const Text('Are you sure you want to delete this entry?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: const Text('Delete'),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            );
+                );
 
-            if (confirmed == true) {
-              await context.read<JournalEntryProvider>().deleteEntry(entry.entryID);
-              Navigator.pop(context);
-            }
-          },
+                if (confirmed == true) {
+                  setState(() => _isDeleting = true);
+                  try {
+                    await context.read<JournalEntryProvider>().deleteEntry(_entry!.entryID);
+                    // Show success
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Entry deleted successfully!')),
+                    );
+                    // Delay a bit so they see snackBar, then pop
+                    await Future.delayed(const Duration(milliseconds: 500));
+                    if (mounted) Navigator.pop(context);
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Error deleting entry')),
+                    );
+                    setState(() => _isDeleting = false);
+                  }
+                }
+              },
+            ),
+          ],
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: _buildDetailBody(context, _entry!),
+          ),
         ),
+
+        // If deleting, overlay a dark barrier + spinner
+        if (_isDeleting)
+          Container(
+            color: Colors.black54,
+            child: const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            ),
+          ),
       ],
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: _buildDetailBody(context, entry),
-      ),
     );
   }
 
@@ -76,8 +124,6 @@ class EntryDetailPage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
-        // Timestamp
         if (entry.timestamp != null)
           Text(
             'Date: ${DateFormat('MM/dd/yyyy').format(entry.timestamp!)}',
@@ -85,12 +131,10 @@ class EntryDetailPage extends StatelessWidget {
           ),
         const SizedBox(height: 8),
 
-        // Description
         if (entry.description != null && entry.description!.isNotEmpty)
           Text(entry.description!),
         const SizedBox(height: 16),
 
-        // Location
         if (entry.latitude != null && entry.longitude != null)
           Padding(
             padding: const EdgeInsets.only(top: 16.0),
@@ -100,11 +144,9 @@ class EntryDetailPage extends StatelessWidget {
             ),
           ),
 
-        // Images
         if (entry.imageURLs != null && entry.imageURLs!.isNotEmpty)
           _buildImageSection(entry.imageURLs!),
 
-        // Videos
         if (entry.videoURLs != null && entry.videoURLs!.isNotEmpty)
           _buildVideoSection(entry.videoURLs!),
       ],
@@ -127,7 +169,15 @@ class EntryDetailPage extends StatelessWidget {
               final url = imageURLs[index];
               return GestureDetector(
                 onTap: () => _showFullscreenImage(context, url),
-                child: Image.network(url, width: 100, fit: BoxFit.cover),
+                child: Image.network(
+                  url,
+                  width: 100,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, progress) {
+                    if (progress == null) return child;
+                    return const Center(child: CircularProgressIndicator());
+                  },
+                ),
               );
             },
           ),
@@ -158,7 +208,6 @@ class EntryDetailPage extends StatelessWidget {
                   ),
                 ),
               ),
-              // Close button in the corner
               Positioned(
                 top: 0,
                 right: 0,
@@ -181,7 +230,6 @@ class EntryDetailPage extends StatelessWidget {
         const Text('Videos:', style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         ListView.builder(
-          // Fixed-height vert list
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: videoURLs.length,
@@ -198,3 +246,5 @@ class EntryDetailPage extends StatelessWidget {
     );
   }
 }
+
+

@@ -4,28 +4,23 @@ import 'package:travellista/entry_card.dart';
 import 'package:travellista/providers/journal_entry_provider.dart';
 import 'package:travellista/shared_scaffold.dart';
 
-
 class HomeScreenPage extends StatelessWidget {
   const HomeScreenPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final entries = Provider.of<JournalEntryProvider>(context).entries;
+    final entryProvider = context.watch<JournalEntryProvider>();
 
+    if (entryProvider.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
     return SharedScaffold(
       title: 'Travellista',
-      body: entries.isNotEmpty
-      ? ListView.builder(
-        itemCount: entries.length,
+      body: ListView.builder(
+        itemCount: entryProvider.entries.length,
         itemBuilder: (context, index) {
-          return EntryCard(entry: entries[index]);
+          return EntryCard(entry: entryProvider.entries[index]);
         },
-      )
-          : const Center(
-        child: Text(
-          'No journal entries recorded yet.',
-          style: TextStyle(fontSize: 18),
-        ),
       ),
     );
   }
