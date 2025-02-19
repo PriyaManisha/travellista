@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:travellista/profile.dart';
 import 'package:travellista/entry_creation_form.dart';
 import 'package:travellista/home_screen_page.dart';
+import 'package:travellista/map_view_page.dart';
 
 class NavBar extends StatefulWidget {
   const NavBar({super.key});
@@ -28,11 +29,17 @@ class _NavBarState extends State<NavBar> {
       case 1:
       // Navigate to Create Entry
         Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => EntryCreationForm())
+            MaterialPageRoute(builder: (context) => const EntryCreationForm())
         );
         break;
       case 2:
-      // Navigate to Settings
+        // Navigate to Map
+        Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const MapViewPage())
+        );
+        break;
+      case 3:
+      // Navigate to Profile
         Navigator.of(context).push(
             MaterialPageRoute(builder: (context) => const ProfilePage())
         );
@@ -40,11 +47,17 @@ class _NavBarState extends State<NavBar> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
       currentIndex: _selectedIndex,
       onTap: _onItemTapped,
+      type: BottomNavigationBarType.fixed,
+      showUnselectedLabels: true,
+      showSelectedLabels: true,
+      selectedItemColor: Theme.of(context).colorScheme.primary,
+      unselectedItemColor: Theme.of(context).colorScheme.primary,
       items: const [
         BottomNavigationBarItem(
           icon: Icon(Icons.home),
@@ -53,6 +66,10 @@ class _NavBarState extends State<NavBar> {
         BottomNavigationBarItem(
           icon: Icon(Icons.add),
           label: 'Create',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.map),
+          label: 'Map',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.person),

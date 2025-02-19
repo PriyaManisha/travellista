@@ -21,7 +21,7 @@ class SharedScaffold extends StatelessWidget {
         title: Text(title),
         actions: actions,
       ),
-      bottomNavigationBar: NavBar(),
+      bottomNavigationBar: const NavBar(),
       body: body,
     );
   }

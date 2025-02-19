@@ -8,7 +8,7 @@ import 'package:travellista/main.dart';
 import 'package:travellista/models/journal_entry.dart';
 import 'package:travellista/nav_bar.dart';
 import 'package:travellista/providers/journal_entry_provider.dart';
-import 'package:travellista/settings.dart';
+import 'package:travellista/profile.dart';
 import 'package:travellista/shared_scaffold.dart';
 import 'package:travellista/util/storage_service.dart';
 import 'package:travellista/util/theme_manager.dart';
