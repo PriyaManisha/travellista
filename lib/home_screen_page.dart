@@ -16,6 +16,7 @@ class HomeScreenPage extends StatelessWidget {
     }
     return SharedScaffold(
       title: 'Travellista',
+      selectedIndex: 0,
       body: ListView.builder(
         itemCount: entryProvider.entries.length,
         itemBuilder: (context, index) {

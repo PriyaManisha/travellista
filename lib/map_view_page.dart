@@ -19,6 +19,7 @@ class _MapViewPageState extends State<MapViewPage> {
   Widget build(BuildContext context) {
     return SharedScaffold(
       title: 'Map View',
+      selectedIndex: 2,
       body: Container(
         color: Colors.grey,
       ),

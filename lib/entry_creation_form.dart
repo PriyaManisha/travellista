@@ -5,6 +5,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:travellista/models/journal_entry.dart';
 import 'package:travellista/providers/journal_entry_provider.dart';
+import 'package:travellista/shared_scaffold.dart';
 import 'package:travellista/util/storage_service.dart';
 import 'package:travellista/video_player_widget.dart';
 
@@ -167,11 +168,9 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
     return Stack(
       children: [
         // Main Scaffold underneath
-        Scaffold(
-          resizeToAvoidBottomInset: true,
-          appBar: AppBar(
-            title: Text(_isEditMode ? 'Edit Entry' : 'Create New Entry'),
-          ),
+        SharedScaffold(
+          title: _isEditMode ? 'Edit Entry' : 'Create New Entry',
+          selectedIndex: 1,
           body: GestureDetector(
             behavior: HitTestBehavior.translucent,
             onTap: () => FocusScope.of(context).unfocus(),

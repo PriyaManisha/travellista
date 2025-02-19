@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:travellista/util/theme_manager.dart';
+import 'package:travellista/shared_scaffold.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile'),
-      ),
+    return SharedScaffold(
+      title: 'Profile',
+      selectedIndex: 3,
       body: ListView(
         children: [
           ValueListenableBuilder<ThemeMode>(

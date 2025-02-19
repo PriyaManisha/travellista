@@ -6,12 +6,14 @@ class SharedScaffold extends StatelessWidget {
   final Widget body;
   final String title;
   final List<Widget>? actions;
+  final int selectedIndex;
 
   const SharedScaffold({
     super.key,
     required this.body,
     required this.title,
     this.actions,
+    this.selectedIndex = 0,
   });
 
   @override
@@ -21,7 +23,7 @@ class SharedScaffold extends StatelessWidget {
         title: Text(title),
         actions: actions,
       ),
-      bottomNavigationBar: const NavBar(),
+      bottomNavigationBar: NavBar(selectedIndex: selectedIndex),
       body: body,
     );
   }

@@ -4,44 +4,31 @@ import 'package:travellista/entry_creation_form.dart';
 import 'package:travellista/home_screen_page.dart';
 import 'package:travellista/map_view_page.dart';
 
-class NavBar extends StatefulWidget {
-  const NavBar({super.key});
+class NavBar extends StatelessWidget {
+  final int selectedIndex;
+  const NavBar({super.key, required this.selectedIndex});
 
-  @override
-  State<NavBar> createState() => _NavBarState();
-}
-
-class _NavBarState extends State<NavBar> {
-  int _selectedIndex = 0;
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-
-    switch(index) {
+  void _onItemTapped(BuildContext context, int index) {
+    // Navigate based on the item tapped.
+    switch (index) {
       case 0:
-      // Navigate to Home
         Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const HomeScreenPage())
+            MaterialPageRoute(builder: (_) => const HomeScreenPage())
         );
         break;
       case 1:
-      // Navigate to Create Entry
-        Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const EntryCreationForm())
+        Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const EntryCreationForm())
         );
         break;
       case 2:
-        // Navigate to Map
-        Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const MapViewPage())
+        Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const MapViewPage())
         );
         break;
       case 3:
-      // Navigate to Profile
-        Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const ProfilePage())
+        Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const ProfilePage())
         );
         break;
     }
@@ -51,13 +38,13 @@ class _NavBarState extends State<NavBar> {
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
-      currentIndex: _selectedIndex,
-      onTap: _onItemTapped,
+      currentIndex: selectedIndex,
+      onTap: (index) => _onItemTapped(context, index),
       type: BottomNavigationBarType.fixed,
       showUnselectedLabels: true,
       showSelectedLabels: true,
       selectedItemColor: Theme.of(context).colorScheme.primary,
-      unselectedItemColor: Theme.of(context).colorScheme.primary,
+      //unselectedItemColor: Theme.of(context).colorScheme.primary,
       items: const [
         BottomNavigationBarItem(
           icon: Icon(Icons.home),
