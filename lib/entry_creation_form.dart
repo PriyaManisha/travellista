@@ -8,6 +8,7 @@ import 'package:travellista/providers/journal_entry_provider.dart';
 import 'package:travellista/shared_scaffold.dart';
 import 'package:travellista/util/storage_service.dart';
 import 'package:travellista/video_player_widget.dart';
+import 'package:travellista/location_picker_screen.dart';
 
 class EntryCreationForm extends StatefulWidget {
   final JournalEntry? existingEntry;
@@ -261,13 +262,28 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
 
   Widget _buildLocationPicker() {
     return ListTile(
-      title: Text('Location: ${_pickedLocation.latitude}, ${_pickedLocation.longitude}'),
+      title: Text(
+        'Location: ${_pickedLocation.latitude}, ${_pickedLocation.longitude}',
+      ),
       trailing: const Icon(Icons.map),
-      onTap: () {
-        // Just placeholder logic
-        setState(() {
-          _pickedLocation = const LatLng(34.0522, -118.2437);
-        });
+      onTap: () async {
+        // Nav to LocationPickerScreen
+        final chosenLocation = await Navigator.push<LatLng?>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => LocationPickerScreen(
+              // Pass current _pickedLocation as init center
+              initialLocation: _pickedLocation,
+            ),
+          ),
+        );
+
+        // Update state
+        if (chosenLocation != null) {
+          setState(() {
+            _pickedLocation = chosenLocation;
+          });
+        }
       },
     );
   }
