@@ -10,33 +10,26 @@ import 'package:travellista/shared_scaffold.dart';
 class EntryDetailPage extends StatefulWidget {
   final String entryID;
 
-  const EntryDetailPage({Key? key, required this.entryID}) : super(key: key);
+  const EntryDetailPage({super.key, required this.entryID});
 
   @override
   State<EntryDetailPage> createState() => _EntryDetailPageState();
 }
 
 class _EntryDetailPageState extends State<EntryDetailPage> {
-  JournalEntry? _entry;
   bool _isDeleting = false;
 
   @override
-  void initState() {
-    super.initState();
-    final provider = context.read<JournalEntryProvider>();
-    // If entry is not found, _entry remains null
-    _entry = provider.entries
-        .where((e) => e.entryID == widget.entryID)
-        .isNotEmpty
-        ? provider.entries.firstWhere((e) => e.entryID == widget.entryID)
-        : null;
-  }
-
-  @override
   Widget build(BuildContext context) {
-    // If somehow entry is null, we can show an error or pop immediately
-    if (_entry == null) {
-      // For safety, just show something or pop
+    final provider = context.watch<JournalEntryProvider>();
+
+    // Find Current entry from  provider
+    final entry = provider.entries.firstWhere(
+          (e) => e.entryID == widget.entryID
+    );
+
+    // If we can't find entry, show fallback
+    if (entry == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Entry Not Found')),
         body: const Center(child: Text('No entry found.')),
@@ -45,9 +38,8 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
 
     return Stack(
       children: [
-        // Normal UI behind
         SharedScaffold(
-          title: _entry!.title ?? 'Untitled',
+          title: entry.title ?? 'Untitled',
           actions: [
             IconButton(
               icon: const Icon(Icons.edit),
@@ -55,7 +47,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => EntryCreationForm(existingEntry: _entry),
+                    builder: (_) => EntryCreationForm(existingEntry: entry),
                   ),
                 );
               },
@@ -84,12 +76,11 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                 if (confirmed == true) {
                   setState(() => _isDeleting = true);
                   try {
-                    await context.read<JournalEntryProvider>().deleteEntry(_entry!.entryID);
-                    // Show success
+                    await context.read<JournalEntryProvider>().deleteEntry(entry.entryID);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Entry deleted successfully!')),
                     );
-                    // Delay a bit so they see snackBar, then pop
+                    // Wait briefly so the user sees the snackBar
                     await Future.delayed(const Duration(milliseconds: 500));
                     if (mounted) Navigator.pop(context);
                   } catch (e) {
@@ -104,11 +95,11 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
           ],
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
-            child: _buildDetailBody(context, _entry!),
+            child: _buildDetailBody(context, entry),
           ),
         ),
 
-        // If deleting, overlay a dark barrier + spinner
+        // Deleting overlay
         if (_isDeleting)
           Container(
             color: Colors.black54,
@@ -139,7 +130,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
           Padding(
             padding: const EdgeInsets.only(top: 16.0),
             child: Text(
-              'Location: ${entry.latitude}, ${entry.longitude}',
+              'Location: ${entry.address ?? '${entry.latitude}, ${entry.longitude}'}',
               style: const TextStyle(fontStyle: FontStyle.italic),
             ),
           ),
@@ -246,5 +237,4 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
     );
   }
 }
-
 

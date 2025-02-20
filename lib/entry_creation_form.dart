@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:travellista/models/journal_entry.dart';
 import 'package:travellista/providers/journal_entry_provider.dart';
@@ -23,6 +24,7 @@ class EntryCreationForm extends StatefulWidget {
 class _EntryCreationFormState extends State<EntryCreationForm> {
   final _formKey = GlobalKey<FormState>();
   late final StorageService _storageService;
+  String? _pickedAddress;
 
   // Controllers
   final TextEditingController _titleController = TextEditingController();
@@ -64,6 +66,8 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
       if (existing.latitude != null && existing.longitude != null) {
         _pickedLocation = LatLng(existing.latitude!, existing.longitude!);
       }
+
+      _pickedAddress = existing.address;
 
       // Keep old remote URLs
       if (existing.imageURLs != null) {
@@ -136,6 +140,7 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
       timestamp: _selectedDate,
       latitude: _pickedLocation.latitude,
       longitude: _pickedLocation.longitude,
+      address: _pickedAddress,
       imageURLs: finalImageURLs,
       videoURLs: finalVideoURLs,
     );
@@ -168,7 +173,6 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Main Scaffold underneath
         SharedScaffold(
           title: _isEditMode ? 'Edit Entry' : 'Create New Entry',
           selectedIndex: 1,
@@ -241,8 +245,10 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
   }
 
   Widget _buildDatePicker() {
+    final dateStr = DateFormat('MM/dd/yyyy').format(_selectedDate);
     return ListTile(
-      title: Text('Date: ${_selectedDate.toLocal()}'.split(' ')[0]),
+      //title: Text('Date: ${_selectedDate.toLocal()}'.split(' ')[0]),
+      title: Text('Date: $dateStr'),
       trailing: const Icon(Icons.calendar_today),
       onTap: _pickDate,
     );
@@ -261,27 +267,29 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
   }
 
   Widget _buildLocationPicker() {
+    final bool hasAddress = _pickedAddress != null && _pickedAddress!.isNotEmpty;
+    final displayedLocation = hasAddress
+        ? 'Location: $_pickedAddress'
+        : 'Location: ${_pickedLocation.latitude}, ${_pickedLocation.longitude}';
+
     return ListTile(
-      title: Text(
-        'Location: ${_pickedLocation.latitude}, ${_pickedLocation.longitude}',
-      ),
+      title: Text(displayedLocation),
+      subtitle: const Text('Tap to pick a location'),
       trailing: const Icon(Icons.map),
       onTap: () async {
-        // Nav to LocationPickerScreen
-        final chosenLocation = await Navigator.push<LatLng?>(
+        final result = await Navigator.push<PickedLocationResult>(
           context,
           MaterialPageRoute(
             builder: (_) => LocationPickerScreen(
-              // Pass current _pickedLocation as init center
               initialLocation: _pickedLocation,
+              initialAddress: _pickedAddress,
             ),
           ),
         );
-
-        // Update state
-        if (chosenLocation != null) {
+        if (result != null && result.latLng != null) {
           setState(() {
-            _pickedLocation = chosenLocation;
+            _pickedLocation = result.latLng!;
+            _pickedAddress = result.address;
           });
         }
       },

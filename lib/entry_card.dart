@@ -14,6 +14,7 @@ class EntryCard extends StatelessWidget {
     final formattedDate = formatter.format(entry.timestamp!);
     final formattedLocation =
         '${entry.latitude}, ${entry.longitude}';
+    final formattedAddress = entry.address ?? formattedLocation;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -28,7 +29,7 @@ class EntryCard extends StatelessWidget {
             : Icon(Icons.photo),
         title: Text(entry.title ?? 'Untitled'),
         subtitle:
-            Text('${formattedDate}, ${formattedLocation}'),
+            Text('${formattedDate}, ${formattedAddress}'),
         onTap: () {
           Navigator.push(
             context,

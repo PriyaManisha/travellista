@@ -10,6 +10,7 @@ class JournalEntry {
   List<String>? _imageURLs;
   List<String>? _videoURLs;
   List<String>? _tags;
+  String? _address;
 
   JournalEntry({
     String? entryID,
@@ -22,6 +23,7 @@ class JournalEntry {
     List<String>? imageURLs = const [],
     List<String>? videoURLs = const [],
     List<String>? tags = const [],
+    String? address,
   })  : _entryID = entryID,
         _userID = userID,
         _timestamp = timestamp,
@@ -31,7 +33,8 @@ class JournalEntry {
         _description = description,
         _imageURLs = imageURLs,
         _videoURLs = videoURLs,
-        _tags = tags;
+        _tags = tags,
+        _address = address;
 
   JournalEntry.newEntry({
     required String userID,
@@ -100,9 +103,7 @@ class JournalEntry {
     _tags = newTags;
   }
 
-  // Getters and setters (same as before)
-  // Getters (with null checks)
-  // Getters
+  // Getters and setters
   String? get entryID =>
       _entryID; // Note: Getter for entryID is now defined correctly
   String get userID => _userID;
@@ -114,8 +115,9 @@ class JournalEntry {
   List<String>? get imageURLs => _imageURLs;
   List<String>? get videoURLs => _videoURLs;
   List<String>? get tags => _tags;
+  set address(String? newAddress) => _address = newAddress;
+  String? get address => _address;
 
-  // Method to convert JournalEntry to a Map for Firestore
   // Method to convert JournalEntry to a Map for Firestore
   Map<String, dynamic> toMap() {
     return {
@@ -129,6 +131,7 @@ class JournalEntry {
       'imageURLs': _imageURLs,
       'videoURLs': _videoURLs,
       'tags': _tags,
+      'address': _address,
     };
   }
 
@@ -154,8 +157,10 @@ class JournalEntry {
           []), // Convert videoURLs to a list and handle null
       tags: List<String>.from(
           map['tags'] ?? []), // Convert tags to a list and handle null
+        address: map['address'] as String?,
     );
   }
+
 
   @override
   String toString() {
@@ -169,7 +174,8 @@ class JournalEntry {
         'description: $_description, '
         'imageURLs: $_imageURLs, '
         'videoURLs: $_videoURLs, '
-        'tags: $_tags'
+        'tags: $_tags, '
+        'address: $_address'
         '}';
   }
 
@@ -184,6 +190,7 @@ class JournalEntry {
     List<String>? imageURLs,
     List<String>? videoURLs,
     List<String>? tags,
+    String? address,
   }) {
     return JournalEntry(
       entryID: entryID ?? this.entryID,
@@ -196,6 +203,7 @@ class JournalEntry {
       imageURLs: imageURLs ?? this.imageURLs,
       videoURLs: videoURLs ?? this.videoURLs,
       tags: tags ?? this.tags,
+      address: address ?? this.address,
     );
   }
 }
