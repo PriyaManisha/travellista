@@ -101,7 +101,23 @@ class _MapViewPageState extends State<MapViewPage> {
             final e = entries[index];
             return ListTile(
               leading: e.imageURLs?.isNotEmpty == true
-                  ? Image.network(e.imageURLs![0], width: 60, fit: BoxFit.cover)
+                  ? Image.network(
+                e.imageURLs![0],
+                width: 60,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) {
+                    return child;
+                  }
+                  return const Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                },
+              )
                   : const Icon(Icons.photo),
               title: Text(e.title ?? 'Untitled'),
               subtitle: Text('${e.timestamp}'),
