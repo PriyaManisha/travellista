@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
@@ -17,12 +18,13 @@ class MapViewPage extends StatefulWidget {
 class _MapViewPageState extends State<MapViewPage> {
   final Completer<GoogleMapController> _mapController = Completer();
 
+  LatLngBounds? _overallBounds;
+
   @override
   Widget build(BuildContext context) {
     final entryProvider = context.watch<JournalEntryProvider>();
     final entries = entryProvider.entries;
 
-    // Show loading spinner if still fetching from Firestore
     if (entryProvider.isLoading) {
       return const SharedScaffold(
         title: 'Map View',
@@ -31,14 +33,12 @@ class _MapViewPageState extends State<MapViewPage> {
       );
     }
 
-    // Group entries by lat/long so multiple at same location can be handled together
     final grouped = _groupEntriesByLatLng(entries);
-
     final Set<Marker> markers = {};
+
     for (var latLongKey in grouped.keys) {
       final latLng = _parseLatLongKey(latLongKey);
       final entriesAtLocation = grouped[latLongKey]!;
-
       markers.add(Marker(
         markerId: MarkerId(latLongKey),
         position: latLng,
@@ -47,14 +47,27 @@ class _MapViewPageState extends State<MapViewPage> {
       ));
     }
 
-    final CameraPosition initialCameraPosition;
+    // Compute map's initial camera position
+    final initialCameraPosition = const CameraPosition(
+      target: LatLng(47.6061, -122.3328),
+      zoom: 3,
+    );
+
+    // If minimum one marker, calc bounding box
     if (markers.isNotEmpty) {
-      final firstMarker = markers.first.position;
-      initialCameraPosition = CameraPosition(target: firstMarker, zoom: 10);
-    } else {
-      initialCameraPosition = const CameraPosition(
-        target: LatLng(37.7749, -122.4194),
-        zoom: 10,
+      double minLat = double.infinity, maxLat = -double.infinity;
+      double minLng = double.infinity, maxLng = -double.infinity;
+      for (var m in markers) {
+        minLat = min(minLat, m.position.latitude);
+        maxLat = max(maxLat, m.position.latitude);
+        minLng = min(minLng, m.position.longitude);
+        maxLng = max(maxLng, m.position.longitude);
+      }
+
+      // Store bounds
+      _overallBounds = LatLngBounds(
+        southwest: LatLng(minLat, minLng),
+        northeast: LatLng(maxLat, maxLng),
       );
     }
 
@@ -64,12 +77,22 @@ class _MapViewPageState extends State<MapViewPage> {
       body: GoogleMap(
         initialCameraPosition: initialCameraPosition,
         markers: markers,
-        onMapCreated: (controller) => _mapController.complete(controller),
+        onMapCreated: (controller) async {
+          _mapController.complete(controller);
+
+          // Once the map created, fit to bounds
+          if (_overallBounds != null) {
+            await Future.delayed(const Duration(milliseconds: 200));
+            controller.animateCamera(
+              CameraUpdate.newLatLngBounds(_overallBounds!, 60),
+            );
+          }
+        },
       ),
     );
   }
 
-  // Group entries by "lat,long" string
+  // Group entries by lat,long
   Map<String, List<JournalEntry>> _groupEntriesByLatLng(List<JournalEntry> entries) {
     final Map<String, List<JournalEntry>> grouped = {};
     for (var e in entries) {
@@ -81,7 +104,7 @@ class _MapViewPageState extends State<MapViewPage> {
     return grouped;
   }
 
-  // Parse "lat,long" into LatLng
+  // Parse lat,long
   LatLng _parseLatLongKey(String key) {
     final parts = key.split(',');
     final lat = double.parse(parts[0]);
@@ -89,7 +112,7 @@ class _MapViewPageState extends State<MapViewPage> {
     return LatLng(lat, lng);
   }
 
-  // Show all entries for a tapped marker
+  // Show all entries for tapped marker
   void _showMarkerEntriesBottomSheet(BuildContext context, List<JournalEntry> entries) {
     showModalBottomSheet(
       context: context,
@@ -120,7 +143,7 @@ class _MapViewPageState extends State<MapViewPage> {
               )
                   : const Icon(Icons.photo),
               title: Text(e.title ?? 'Untitled'),
-              subtitle: Text('${e.timestamp}'),
+              subtitle: Text('${e.address}'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
