@@ -79,21 +79,25 @@ class HomeScreenPage extends StatelessWidget {
     return SharedScaffold(
       title: 'Travellista',
       selectedIndex: 0,
-      body: ListView(
-        children: sortedGroups.map((group) {
-          final locationKey = group.key;
-          final entriesForGroup = group.value;
-          return ExpansionTile(
-            title: Text('$locationKey'),
-            leading: const Icon(Icons.location_on),
-            trailing: const Icon(Icons.keyboard_arrow_down),
-            textColor: Theme.of(context).colorScheme.primary,
-            iconColor: Theme.of(context).colorScheme.primary,
-            collapsedIconColor: Colors.grey,
-            childrenPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            children: entriesForGroup.map((entry) => EntryCard(entry: entry)).toList(),
-          );
-        }).toList(),
+      body: KeyedSubtree(
+        key: UniqueKey(),
+        child: ListView(
+          children: sortedGroups.map((group) {
+            final locationKey = group.key;
+            final entriesForGroup = group.value;
+            return ExpansionTile(
+              key: UniqueKey(),
+              title: Text('$locationKey'),
+              leading: const Icon(Icons.location_on),
+              trailing: const Icon(Icons.keyboard_arrow_down),
+              textColor: Theme.of(context).colorScheme.primary,
+              iconColor: Theme.of(context).colorScheme.primary,
+              collapsedIconColor: Colors.grey,
+              childrenPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              children: entriesForGroup.map((entry) => EntryCard(entry: entry)).toList(),
+            );
+          }).toList(),
+        ),
       ),
     );
   }
