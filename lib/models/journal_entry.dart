@@ -105,7 +105,7 @@ class JournalEntry {
 
   // Getters and setters
   String? get entryID =>
-      _entryID; // Note: Getter for entryID is now defined correctly
+      _entryID;
   String get userID => _userID;
   DateTime? get timestamp => _timestamp;
   double? get latitude => _latitude;
@@ -118,7 +118,7 @@ class JournalEntry {
   set address(String? newAddress) => _address = newAddress;
   String? get address => _address;
 
-  // Method to convert JournalEntry to a Map for Firestore
+  // Method to convert JournalEntry Map for Firestore
   Map<String, dynamic> toMap() {
     return {
       'entryID': _entryID,
