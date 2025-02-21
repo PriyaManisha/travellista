@@ -15,6 +15,7 @@ void main() {
         longitude: -122.4194,
         imageURLs: ['http://example.com/img1.jpg'],
         videoURLs: ['http://example.com/video1.mp4'],
+        address: 'San Francisco, CA, United States',
       );
 
       expect(entry.entryID, '123');
@@ -26,6 +27,7 @@ void main() {
       expect(entry.longitude, -122.4194);
       expect(entry.imageURLs, ['http://example.com/img1.jpg']);
       expect(entry.videoURLs, ['http://example.com/video1.mp4']);
+      expect(entry.address, 'San Francisco, CA, United States');
     });
 
     test('toMap and fromMap', () {
@@ -37,6 +39,7 @@ void main() {
         timestamp: date,
         imageURLs: ['img1', 'img2'],
         videoURLs: ['vid1'],
+        address: 'San Francisco, CA, United States',
       );
 
       final map = entry.toMap();
@@ -46,6 +49,8 @@ void main() {
       expect(map['timestamp'], date.toIso8601String());
       expect(map['imageURLs'], ['img1', 'img2']);
       expect(map['videoURLs'], ['vid1']);
+      expect(map['address'], 'San Francisco, CA, United States');
+
 
       // Assert : rebuild from map
       final rebuiltEntry = JournalEntry.fromMap(map);
@@ -54,6 +59,7 @@ void main() {
       expect(rebuiltEntry.timestamp, entry.timestamp);
       expect(rebuiltEntry.imageURLs, entry.imageURLs);
       expect(rebuiltEntry.videoURLs, entry.videoURLs);
+      expect(rebuiltEntry.address, entry.address);
     });
   });
 }
