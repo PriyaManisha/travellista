@@ -29,7 +29,10 @@ class EntryCard extends StatelessWidget {
             : Icon(Icons.photo),
         title: Text(entry.title ?? 'Untitled'),
         subtitle:
-            Text('${formattedDate}, ${formattedAddress}'),
+            Text('${formattedDate}, ${formattedAddress}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
         onTap: () {
           Navigator.push(
             context,

@@ -24,7 +24,7 @@ class EntryCreationForm extends StatefulWidget {
 class _EntryCreationFormState extends State<EntryCreationForm> {
   final _formKey = GlobalKey<FormState>();
   late final StorageService _storageService;
-  String? _pickedAddress;
+  String? _pickedAddress = "Seattle, WA, United States";
 
   // Controllers
   final TextEditingController _titleController = TextEditingController();
@@ -32,7 +32,7 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
 
   // State
   DateTime _selectedDate = DateTime.now();
-  LatLng _pickedLocation = const LatLng(37.7749, -122.4194);
+  LatLng _pickedLocation = const LatLng(47.60621, -122.33207);
 
   // For newly picked files only
   List<File> _imageFiles = [];
@@ -159,13 +159,19 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
       );
     }
 
-    Navigator.pop(context);
     } catch (e) {
+      print('Exception caught: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Error saving entry')),
       );
     } finally {
+      // Turn off the saving spinner
       setState(() => _isSaving = false);
+    }
+
+    // Now that the overlay is gone, pop the route
+    if (mounted) {
+      Navigator.pop(context);
     }
   }
 
@@ -333,7 +339,6 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
 
   Widget _buildExistingImagesSection() {
     if (_oldImageURLs.isEmpty) return const SizedBox.shrink();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

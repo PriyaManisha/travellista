@@ -9,7 +9,6 @@ class NavBar extends StatelessWidget {
   const NavBar({super.key, required this.selectedIndex});
 
   void _onItemTapped(BuildContext context, int index) {
-    // Navigate based on the item tapped.
     switch (index) {
       case 0:
         Navigator.of(context).pushReplacement(
@@ -17,17 +16,17 @@ class NavBar extends StatelessWidget {
         );
         break;
       case 1:
-        Navigator.of(context).pushReplacement(
+        Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const EntryCreationForm())
         );
         break;
       case 2:
-        Navigator.of(context).pushReplacement(
+        Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const MapViewPage())
         );
         break;
       case 3:
-        Navigator.of(context).pushReplacement(
+        Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const ProfilePage())
         );
         break;

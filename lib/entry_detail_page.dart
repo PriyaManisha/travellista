@@ -23,92 +23,103 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   Widget build(BuildContext context) {
     final provider = context.watch<JournalEntryProvider>();
 
-    // Find Current entry from  provider
-    final entry = provider.entries.firstWhere(
-          (e) => e.entryID == widget.entryID
-    );
+    if (!_isDeleting) {
+      final index = provider.entries.indexWhere(
+            (e) => e.entryID == widget.entryID,
+      );
 
-    // If we can't find entry, show fallback
-    if (entry == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Entry Not Found')),
-        body: const Center(child: Text('No entry found.')),
+      if (index == -1) {
+        Navigator.pop(context);
+        return const SizedBox.shrink();
+      }
+
+      final entry = provider.entries[index];
+
+      return Stack(
+        children: [
+          SharedScaffold(
+            title: entry.title ?? 'Untitled',
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.edit),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => EntryCreationForm(existingEntry: entry),
+                    ),
+                  );
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: () => _confirmDelete(context, entry),
+              ),
+            ],
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: _buildDetailBody(context, entry),
+            ),
+          ),
+          if (_isDeleting)
+            Container(
+              color: Colors.black54,
+              child: const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.purple),
+                ),
+              ),
+            ),
+        ],
+      );
+    } else {
+      return Container(
+        color: Colors.black54,
+        alignment: Alignment.center,
+        child: const CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.purple),
+        ),
       );
     }
+  }
 
-    return Stack(
-      children: [
-        SharedScaffold(
-          title: entry.title ?? 'Untitled',
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => EntryCreationForm(existingEntry: entry),
-                  ),
-                );
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: () async {
-                final confirmed = await showDialog<bool>(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: const Text('Confirm Delete'),
-                    content: const Text('Are you sure you want to delete this entry?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx, false),
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx, true),
-                        child: const Text('Delete'),
-                      ),
-                    ],
-                  ),
-                );
-
-                if (confirmed == true) {
-                  setState(() => _isDeleting = true);
-                  try {
-                    await context.read<JournalEntryProvider>().deleteEntry(entry.entryID);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Entry deleted successfully!')),
-                    );
-                    // Wait briefly so the user sees the snackBar
-                    await Future.delayed(const Duration(milliseconds: 500));
-                    if (mounted) Navigator.pop(context);
-                  } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Error deleting entry')),
-                    );
-                    setState(() => _isDeleting = false);
-                  }
-                }
-              },
-            ),
-          ],
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: _buildDetailBody(context, entry),
+  // Prompts the user for delete confirmation, then async delete.
+  Future<void> _confirmDelete(BuildContext context, JournalEntry entry) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Confirm Delete'),
+        content: const Text('Are you sure you want to delete this entry?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
           ),
-        ),
-
-        // Deleting overlay
-        if (_isDeleting)
-          Container(
-            color: Colors.black54,
-            child: const Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
           ),
-      ],
+        ],
+      ),
     );
+
+    if (confirmed == true) {
+      setState(() => _isDeleting = true);
+
+      try {
+        await context.read<JournalEntryProvider>().deleteEntry(entry.entryID);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Entry deleted successfully!')),
+        );
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (mounted) Navigator.pop(context);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error deleting entry')),
+        );
+        setState(() => _isDeleting = false);
+      }
+    }
   }
 
   Widget _buildDetailBody(BuildContext context, JournalEntry entry) {
