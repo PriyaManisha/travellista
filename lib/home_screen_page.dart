@@ -73,19 +73,19 @@ class HomeScreenPage extends StatelessWidget {
 
     final groupedMap = _groupEntriesByLocation(entryProvider.entries);
 
+    final sortedGroups = groupedMap.entries.toList()
+      ..sort((a, b) => b.value.length.compareTo(a.value.length));
+
     return SharedScaffold(
       title: 'Travellista',
       selectedIndex: 0,
       body: ListView(
-        children: groupedMap.entries.map((group) {
+        children: sortedGroups.map((group) {
           final locationKey = group.key;
           final entriesForGroup = group.value;
-
           return ExpansionTile(
-            title: Text(locationKey),
-            children: entriesForGroup.map((entry) {
-              return EntryCard(entry: entry);
-            }).toList(),
+            title: Text('$locationKey'),
+            children: entriesForGroup.map((entry) => EntryCard(entry: entry)).toList(),
           );
         }).toList(),
       ),
