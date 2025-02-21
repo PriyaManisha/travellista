@@ -117,13 +117,13 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
 
     // 3. Remove old media that user chose to remove
     for (final url in _removedOldImageURLs) {
-      await _storageService.deleteFileByUrl(url); // Implement in your StorageService
+      await _storageService.deleteFileByUrl(url);
     }
     for (final url in _removedOldVideoURLs) {
-      await _storageService.deleteFileByUrl(url); // Same approach
+      await _storageService.deleteFileByUrl(url);
     }
 
-    // Also exclude them from the final arrays
+    // Exclude from final arrays
     _oldImageURLs.removeWhere((url) => _removedOldImageURLs.contains(url));
     _oldVideoURLs.removeWhere((url) => _removedOldVideoURLs.contains(url));
 
@@ -165,11 +165,9 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
         const SnackBar(content: Text('Error saving entry')),
       );
     } finally {
-      // Turn off the saving spinner
       setState(() => _isSaving = false);
     }
 
-    // Now that the overlay is gone, pop the route
     if (mounted) {
       Navigator.pop(context);
     }
