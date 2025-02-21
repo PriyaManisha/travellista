@@ -62,7 +62,7 @@ class HomeScreenPage extends StatelessWidget {
     }
 
     if (entryProvider.entries.isEmpty) {
-      return SharedScaffold(
+      return const SharedScaffold(
         title: 'Travellista',
         selectedIndex: 0,
         body: Center(
@@ -85,6 +85,12 @@ class HomeScreenPage extends StatelessWidget {
           final entriesForGroup = group.value;
           return ExpansionTile(
             title: Text('$locationKey'),
+            leading: const Icon(Icons.location_on),
+            trailing: const Icon(Icons.keyboard_arrow_down),
+            textColor: Theme.of(context).colorScheme.primary,
+            iconColor: Theme.of(context).colorScheme.primary,
+            collapsedIconColor: Colors.grey,
+            childrenPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             children: entriesForGroup.map((entry) => EntryCard(entry: entry)).toList(),
           );
         }).toList(),
