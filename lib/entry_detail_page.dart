@@ -52,6 +52,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                 },
               ),
               IconButton(
+                key: const Key('deleteEntryButton'),
                 icon: const Icon(Icons.delete),
                 onPressed: () => _confirmDelete(context, entry),
               ),
