@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:travellista/models/journal_entry.dart';
 import 'package:travellista/providers/journal_entry_provider.dart';
+import 'package:travellista/providers/profile_provider.dart';
 import 'package:travellista/shared_scaffold.dart';
 import 'package:travellista/util/storage_service.dart';
 import 'package:travellista/video_player_widget.dart';
@@ -85,7 +86,7 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
     return filePath.substring(dotIndex).toLowerCase();
   }
 
-  Future<void> _saveEntry() async {
+  Future<void> _saveEntry(String userID) async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isSaving = true);
@@ -175,6 +176,8 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
 
   @override
   Widget build(BuildContext context) {
+    final profileProvider = context.watch<ProfileProvider>();
+    final userID = profileProvider.profile?.userID ?? 'demoUser';
     return Stack(
       children: [
         SharedScaffold(
@@ -203,7 +206,9 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
                     _buildVideoPicker(),
                     const SizedBox(height: 20),
                     ElevatedButton(
-                      onPressed: _saveEntry,
+                      onPressed: () {
+                        _saveEntry(userID);
+                      },
                       child: Text(_isEditMode ? 'Update Entry' : 'Save Entry'),
                     ),
                     const SizedBox(height: 20),

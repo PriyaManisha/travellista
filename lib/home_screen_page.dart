@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:travellista/entry_card.dart';
 import 'package:travellista/providers/journal_entry_provider.dart';
+import 'package:travellista/providers/profile_provider.dart';
 import 'package:travellista/shared_scaffold.dart';
 import 'package:travellista/models/journal_entry.dart';
 
@@ -50,8 +51,27 @@ String computeGroupKey(JournalEntry entry) {
   }
 }
 
-class HomeScreenPage extends StatelessWidget {
+class HomeScreenPage extends StatefulWidget {
   const HomeScreenPage({super.key});
+
+  @override
+  State<HomeScreenPage> createState() => _HomeScreenPageState();
+}
+
+
+class _HomeScreenPageState extends State<HomeScreenPage> {
+  @override
+  void initState() {
+    super.initState();
+
+    final profileProvider = context.read<ProfileProvider>();
+    final journalProvider = context.read<JournalEntryProvider>();
+
+    String userID = profileProvider.profile?.userID ?? 'demoUser';
+
+    journalProvider.fetchEntriesForUser(userID);
+  }
+
 
   @override
   Widget build(BuildContext context) {

@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:travellista/models/profile.dart';
-import 'package:travellista/util/profile_service.dart';
+import 'package:provider/provider.dart';
 import 'package:travellista/util/storage_service.dart';
 import 'package:travellista/util/theme_manager.dart';
+import 'package:travellista/providers/profile_provider.dart';
 
 class ProfilePageBody extends StatefulWidget {
   const ProfilePageBody({super.key});
@@ -14,17 +14,12 @@ class ProfilePageBody extends StatefulWidget {
 }
 
 class _ProfilePageBodyState extends State<ProfilePageBody> {
-  final ProfileService _profileService = ProfileService();
   final StorageService _storageService = StorageService();
   final ImagePicker _picker = ImagePicker();
 
-  // Hard-coded for now
-  String _userID = "demoUser";
-
   // Booleans for loading states
-  bool _isLoading = true;
   bool _isEditing = false;
-  bool _isSaving = false;
+  bool _localIsSaving = false;
 
   // Profile fields
   String? _firstName;
@@ -36,156 +31,48 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
   @override
   void initState() {
     super.initState();
-    _fetchProfile();
-  }
-
-  Future<void> _fetchProfile() async {
-    setState(() => _isLoading = true);
-    try {
-      final profile = await _profileService.getProfile(_userID);
-      if (profile != null) {
-        setState(() {
-          _firstName = profile.firstName;
-          _lastName = profile.lastName;
-          _displayName = profile.displayName;
-          _email = profile.email;
-          _photoUrl = profile.photoUrl;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error fetching profile: $e')),
-        );
-      }
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  // Image picker uses StorageService
-  Future<void> _pickProfilePicture() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile == null) return; // user canceled
-
-    try {
-      // Show spinner while uploading image
-      setState(() => _isSaving = true);
-
-      final extension = pickedFile.path.split('.').last;
-      final fileName = 'profile_${DateTime.now().millisecondsSinceEpoch}.$extension';
-
-      final downloadUrl = await _storageService.uploadFile(
-        File(pickedFile.path),
-        'profile_pics/$fileName',
-      );
-
-      setState(() {
-        _photoUrl = downloadUrl;
-      });
-
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error uploading profile picture: $e')),
-        );
-      }
-    } finally {
-      setState(() => _isSaving = false);
-    }
-  }
-
-  // Show confirmation prompt before trying to update + save
-  Future<void> _confirmAndSaveProfile() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("Update Profile"),
-        content: const Text("Are you sure you want to update your profile?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text("Yes"),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      await _saveProfile();
-    }
-  }
-
-  // Use spinner while waiting for profile to save
-  Future<void> _saveProfile() async {
-    setState(() => _isSaving = true);
-
-    try {
-      // Build new Profile from fields
-      final newProfile = Profile(
-        userID: _userID,
-        firstName: _firstName,
-        lastName: _lastName,
-        displayName: _displayName,
-        email: _email,
-        photoUrl: _photoUrl,
-      );
-
-      // Save new profile
-      await _profileService.setProfile(newProfile);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated successfully')),
-        );
-      }
-
-      setState(() => _isEditing = false);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving profile: $e')),
-        );
-      }
-    } finally {
-      setState(() => _isSaving = false);
-    }
+    // st using "demoUser" for now:
+    context.read<ProfileProvider>().fetchProfile("demoUser");
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
+    final profileProvider = context.watch<ProfileProvider>();
+    final isLoadingProfile = profileProvider.isLoading;
+    final currentProfile = profileProvider.profile;
+
+    if (isLoadingProfile && currentProfile == null) {
       return const Center(child: CircularProgressIndicator());
+    }
+
+    if (currentProfile == null) {
+      return const Center(child: Text('No profile found'));
+    }
+
+    if (!_isEditing) {
+      _firstName = currentProfile?.firstName;
+      _lastName = currentProfile?.lastName;
+      _photoUrl = currentProfile?.photoUrl;
+      _displayName = currentProfile!.displayName;
+      _email = currentProfile.email;
     }
 
     return Stack(
       children: [
-        _buildMainContent(),
-        if (_isSaving)
-          Container(
-            color: Colors.black54,
-            child: const Center(
-              child: CircularProgressIndicator(color: Colors.deepPurple),
-            ),
-          ),
+        _buildMainContent(profileProvider),
+        if (_localIsSaving || (isLoadingProfile && currentProfile != null))
+          _buildOverlaySpinner(),
       ],
     );
   }
 
-  Widget _buildMainContent() {
-    // Add fields for firstName, lastName, displayName, email
+  Widget _buildMainContent(ProfileProvider provider) {
     return ListView(
       padding: const EdgeInsets.all(16.0),
       children: [
-        // Profile Picture
         _buildProfilePicture(),
         const SizedBox(height: 24),
 
-        // If editing, build text fields
         if (_isEditing) ...[
           _buildTextField(
             label: "First Name",
@@ -222,10 +109,8 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
           const SizedBox(height: 24),
         ],
 
-        // Action Buttons (Edit/Save/Cancel)
-        _buildActionButtons(),
+        _buildActionButtons(provider),
 
-        // Theme Toggle
         const SizedBox(height: 24),
         _buildDarkModeSwitch(),
       ],
@@ -234,7 +119,7 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
 
   Widget _buildProfilePicture() {
     return InkWell(
-      onTap: _pickProfilePicture,
+      onTap: _isEditing ? _pickProfilePicture : null,
       child: CircleAvatar(
         radius: 40,
         backgroundImage: (_photoUrl != null && _photoUrl!.isNotEmpty)
@@ -268,18 +153,20 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(ProfileProvider provider) {
     if (_isEditing) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           ElevatedButton(
-            onPressed: _confirmAndSaveProfile, // shows prompt, then saves
+            onPressed: _confirmAndSaveProfile(provider),
             child: const Text("Save"),
           ),
           const SizedBox(width: 8),
           OutlinedButton(
-            onPressed: () => setState(() => _isEditing = false),
+            onPressed: () {
+              setState(() => _isEditing = false);
+            },
             child: const Text("Cancel"),
           ),
         ],
@@ -290,6 +177,99 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
         child: const Text("Edit Profile"),
       );
     }
+  }
+
+  VoidCallback _confirmAndSaveProfile(ProfileProvider provider) {
+    return () async {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text("Update Profile"),
+          content: const Text("Are you sure you want to update your profile?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text("Yes"),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed == true) {
+        _saveProfile(provider);
+      }
+    };
+  }
+
+  Future<void> _saveProfile(ProfileProvider provider) async {
+    final oldProfile = provider.profile;
+    if (oldProfile == null) return;
+
+    // Build new profile
+    final updated = oldProfile.copyWith(
+      firstName: _firstName,
+      lastName: _lastName,
+      displayName: _displayName,
+      email: _email,
+      photoUrl: _photoUrl,
+    );
+
+    try {
+      await provider.saveProfile(updated);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile updated successfully')),
+        );
+      }
+      setState(() => _isEditing = false);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving profile: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _pickProfilePicture() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile == null) return;
+
+    try {
+      setState(() => _localIsSaving = true);
+
+      final extension = pickedFile.path.split('.').last;
+      final fileName = 'profile_${DateTime.now().millisecondsSinceEpoch}.$extension';
+
+      final downloadUrl = await _storageService.uploadFile(
+        File(pickedFile.path),
+        'profile_pics/$fileName',
+      );
+      setState(() {
+        _photoUrl = downloadUrl;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error uploading profile picture: $e')),
+        );
+      }
+    } finally {
+      setState(() => _localIsSaving = false);
+    }
+  }
+
+  Widget _buildOverlaySpinner() {
+    return Container(
+      color: Colors.black54,
+      child: const Center(
+        child: CircularProgressIndicator(color: Colors.deepPurple),
+      ),
+    );
   }
 
   Widget _buildDarkModeSwitch() {

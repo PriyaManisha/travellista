@@ -4,6 +4,7 @@ import 'package:travellista/util/theme_manager.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:travellista/providers/journal_entry_provider.dart';
+import 'package:travellista/providers/profile_provider.dart';
 import 'package:travellista/firebase_options.dart';
 
 void main() async {
@@ -21,8 +22,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => JournalEntryProvider(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => JournalEntryProvider()),
+        ChangeNotifierProvider(create: (_) => ProfileProvider()),
+      ],
       child: ValueListenableBuilder<ThemeMode>(
         valueListenable: ThemeManager.themeNotifier,
         builder: (_, ThemeMode currentTheme, __) {

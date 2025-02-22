@@ -10,34 +10,33 @@ class JournalEntryProvider extends ChangeNotifier {
 
   // Fetch from Firestore when providers is created
   JournalEntryProvider() {
-    fetchEntries();
+    //fetchEntries();
   }
 
-  Future<void> fetchEntries() async {
+  // Fetch all entries
+  Future<void> fetchEntriesForUser(String userID) async {
     _isLoading = true;
     notifyListeners();
 
     _entries.clear();
     final querySnapshot = await FirebaseFirestore.instance
         .collection('journal_entries')
+        .where('userID', isEqualTo: userID)
         .get();
 
     for (var doc in querySnapshot.docs) {
-      // Convert document to JournalEntry using factory constructor
       final mapData = doc.data();
-      final entryFromMap = JournalEntry.fromMap(mapData);
-
-      // Overwrite entryID with Firestore doc.id:
-      entryFromMap.entryID = doc.id;
-
-      _entries.add(entryFromMap);
+      final entry = JournalEntry.fromMap(mapData);
+      entry.entryID = doc.id;
+      _entries.add(entry);
     }
+
     _isLoading = false;
     notifyListeners();
   }
 
   Future<void> addEntry(JournalEntry entry) async {
-    // Save to Firestore using your model’s .toMap() function
+    // Save to Firestore using model’s .toMap() function
     final docRef = await FirebaseFirestore.instance
         .collection('journal_entries')
         .add(entry.toMap());

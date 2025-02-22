@@ -8,14 +8,13 @@ class Profile {
 
   Profile({
     required this.userID,
-    this. firstName,
+    this.firstName,
     this.lastName,
     required this.displayName,
     required this.email,
     this.photoUrl,
   });
 
-  // Construct Profile from Firestore doc snapshot
   factory Profile.fromMap(Map<String, dynamic> data, String documentId) {
     return Profile(
       userID: documentId,
@@ -27,7 +26,6 @@ class Profile {
     );
   }
 
-  // Convert Profile object to map for saving to Firestore
   Map<String, dynamic> toMap() {
     return {
       'firstName': firstName,
@@ -37,4 +35,24 @@ class Profile {
       'photoUrl': photoUrl,
     };
   }
+
+  // Allows partial updates while returning new Profile obj
+  Profile copyWith({
+    String? userID,
+    String? firstName,
+    String? lastName,
+    String? displayName,
+    String? email,
+    String? photoUrl,
+  }) {
+    return Profile(
+      userID: userID ?? this.userID,
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
+      displayName: displayName ?? this.displayName,
+      email: email ?? this.email,
+      photoUrl: photoUrl ?? this.photoUrl,
+    );
+  }
 }
+
