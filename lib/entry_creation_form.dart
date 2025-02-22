@@ -134,7 +134,7 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
     // 5. Create or update the JournalEntry
     final updatedEntry = JournalEntry(
       entryID: widget.existingEntry?.entryID,
-      userID: widget.existingEntry?.userID ?? 'some_user_id',
+      userID: widget.existingEntry?.userID ?? 'demoUser',
       title: _titleController.text,
       description: _descriptionController.text,
       timestamp: _selectedDate,

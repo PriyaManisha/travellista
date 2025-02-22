@@ -67,7 +67,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
               color: Colors.black54,
               child: const Center(
                 child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.purple),
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
                 ),
               ),
             ),
@@ -78,7 +78,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
         color: Colors.black54,
         alignment: Alignment.center,
         child: const CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(Colors.purple),
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
         ),
       );
     }

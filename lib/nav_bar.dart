@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:travellista/profile.dart';
+import 'package:travellista/profile_page.dart';
 import 'package:travellista/entry_creation_form.dart';
 import 'package:travellista/home_screen_page.dart';
 import 'package:travellista/map_view_page.dart';
