@@ -1,4 +1,6 @@
 // JournalEntry Model
+import 'package:flutter/cupertino.dart';
+
 class JournalEntry {
   String? _entryID;
   String _userID;
@@ -57,7 +59,7 @@ class JournalEntry {
 
   set entryID(String? newEntryID) {
     if (newEntryID != null && newEntryID.isEmpty) {
-      print('Error: Entry ID cannot be empty');
+      debugPrint('Warning: Entry ID cannot be empty');
     } else {
       _entryID = newEntryID;
     }
@@ -65,7 +67,7 @@ class JournalEntry {
 
   set userID(String newUserID) {
     if (newUserID.isEmpty) {
-      print('Error: User ID cannot be empty');
+      debugPrint('Warning: User ID cannot be empty');
     } else {
       _userID = newUserID;
     }

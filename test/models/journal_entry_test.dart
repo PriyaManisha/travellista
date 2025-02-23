@@ -209,7 +209,7 @@ void main() {
         expect(entry.userID, 'initialUser');
       });
 
-      test('address setter', () {
+      test('address setter: should contain updated params', () {
         // setup / given / arrange
         expect(entry.address, isNull);
 
@@ -219,7 +219,7 @@ void main() {
         expect(entry.address, 'New Address');
       });
 
-      test('latitude and longitude setters', () {
+      test('latitude and longitude setters: should update lat/long', () {
         // setup / given / arrange
         expect(entry.latitude, isNull);
 
@@ -233,7 +233,7 @@ void main() {
         expect(entry.longitude, 65.4321);
       });
 
-      test('tags setter', () {
+      test('tags setter - should update tag params', () {
         // setup / given / arrange
         expect(entry.tags, isEmpty);
         entry.tags = ['tag1', 'tag2'];
@@ -241,7 +241,7 @@ void main() {
         expect(entry.tags, ['tag1', 'tag2']);
       });
 
-      test('timestamp setter', () {
+      test('timestamp setter - should update timestamp param', () {
         // setup / given / arrange
         final newTime = DateTime(2030, 1, 1);
         entry.timestamp = newTime;

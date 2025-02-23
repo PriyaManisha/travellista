@@ -203,7 +203,7 @@ void main() {
       expect(find.byType(AlertDialog), findsOneWidget);
 
       // ACT : Tap "Cancel"
-      await tester.tap(find.byKey(const Key('dialogCancelButton')));
+      await tester.tap(find.byKey(const Key('dialogCancelButton')), warnIfMissed: false);
       await tester.pump();
 
       // VERIFY : Confirm no call to saveProfile was made
