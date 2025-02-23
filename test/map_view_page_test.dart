@@ -30,41 +30,41 @@ void main() {
   group('MapViewPage Widget Tests', () {
     testWidgets('Shows CircularProgressIndicator when isLoading is true',
             (WidgetTester tester) async {
-          // Arrange
+          // setup/given/arrange : mock provider
           when(mockProvider.isLoading).thenReturn(true);
           when(mockProvider.entries).thenReturn([]);
 
-          // Act
+          // Act: display widget to virtual screen
           await tester.pumpWidget(createMapViewPageUnderTest());
 
-          // Assert
+          // Assert: we expect a circular progress spinner
           expect(find.byType(CircularProgressIndicator), findsOneWidget);
           expect(find.byType(GoogleMap), findsNothing);
         });
 
     testWidgets('Shows GoogleMap with no markers when entries is empty and isLoading is false',
             (WidgetTester tester) async {
-          // Arrange
+          // setup/given/arrange : mock provider
           when(mockProvider.isLoading).thenReturn(false);
           when(mockProvider.entries).thenReturn([]);
 
-          // Act
+          // Act: display widget to virtual screen
           await tester.pumpWidget(createMapViewPageUnderTest());
 
-          // Assert
+          // Assert: should not find the progress indicator
           expect(find.byType(CircularProgressIndicator), findsNothing);
           expect(find.byType(GoogleMap), findsOneWidget);
 
-          // Retrieve the GoogleMap widget
+          // Act: Retrieve the GoogleMap widget
           final googleMapWidget = tester.widget<GoogleMap>(find.byType(GoogleMap));
 
-          // Verify that the markers set is empty
+          // Assert: Verify that the markers set is empty
           expect(googleMapWidget.markers, isEmpty);
         });
 
     testWidgets('Shows GoogleMap with markers for each entry when isLoading is false and there are entries',
             (WidgetTester tester) async {
-          // Arrange
+          // setup/given/arrange : mock provider
           when(mockProvider.isLoading).thenReturn(false);
 
           // Arrange - Create sample journal entries with lat/long
@@ -86,10 +86,10 @@ void main() {
           );
           when(mockProvider.entries).thenReturn([entry1, entry2]);
 
-          // Act
+          // Act - display widget to virtual screen
           await tester.pumpWidget(createMapViewPageUnderTest());
 
-          // Assert
+          // Assert - should not find the progress indicator
           expect(find.byType(CircularProgressIndicator), findsNothing);
           expect(find.byType(GoogleMap), findsOneWidget);
 

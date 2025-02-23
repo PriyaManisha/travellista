@@ -2,15 +2,18 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:travellista/util/location_service.dart';
+import 'package:travellista/util/location_service_wrapper.dart';
 
 class LocationPickerScreen extends StatefulWidget {
   final LatLng initialLocation;
   final String? initialAddress;
+  final ILocationService? locationService;
 
   const LocationPickerScreen({
     super.key,
     required this.initialLocation,
     this.initialAddress,
+    this.locationService,
   });
 
   @override
@@ -19,6 +22,8 @@ class LocationPickerScreen extends StatefulWidget {
 
 class _LocationPickerScreenState extends State<LocationPickerScreen> {
   final Completer<GoogleMapController> _controller = Completer();
+  late final ILocationService _service;
+
   LatLng? _pickedLocation;
   String? _pickedAddress;
   bool _isLoadingAddress = false;
@@ -26,6 +31,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   @override
   void initState() {
     super.initState();
+    _service = widget.locationService ?? LocationServiceWrapper();
     _pickedLocation = widget.initialLocation;
     _pickedAddress = widget.initialAddress;
   }
@@ -36,7 +42,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       _isLoadingAddress = true;
     });
 
-    final address = await LocationService.reverseGeocode(
+    final address = await _service.reverseGeocode(
       newLocation.latitude,
       newLocation.longitude,
     );

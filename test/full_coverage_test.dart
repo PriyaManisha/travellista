@@ -16,6 +16,7 @@ import 'package:travellista/providers/journal_entry_provider.dart';
 import 'package:travellista/providers/profile_provider.dart';
 import 'package:travellista/shared_scaffold.dart';
 import 'package:travellista/util/location_service.dart';
+import 'package:travellista/util/location_service_wrapper.dart';
 import 'package:travellista/util/profile_service.dart';
 import 'package:travellista/util/storage_service.dart';
 import 'package:travellista/util/theme_manager.dart';
