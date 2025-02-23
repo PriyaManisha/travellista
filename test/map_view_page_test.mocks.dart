@@ -52,9 +52,9 @@ class MockJournalEntryProvider extends _i1.Mock
           as bool);
 
   @override
-  _i4.Future<void> fetchEntries() =>
+  _i4.Future<void> fetchEntriesForUser(String? userID) =>
       (super.noSuchMethod(
-            Invocation.method(#fetchEntries, []),
+            Invocation.method(#fetchEntriesForUser, [userID]),
             returnValue: _i4.Future<void>.value(),
             returnValueForMissingStub: _i4.Future<void>.value(),
           )
