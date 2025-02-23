@@ -6,21 +6,28 @@ import 'package:travellista/entry_card.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:travellista/providers/journal_entry_provider.dart';
+import 'package:travellista/providers/profile_provider.dart';
 import 'package:travellista/models/journal_entry.dart';
+
 import 'home_screen_page_test.mocks.dart';
 
-@GenerateMocks([JournalEntryProvider])
+@GenerateMocks([JournalEntryProvider, ProfileProvider])
 
 void main() {
-  late MockJournalEntryProvider mockProvider;
+  late MockJournalEntryProvider mockJournalProvider;
+  late MockProfileProvider mockProfileProvider;
 
   setUp(() {
-    mockProvider = MockJournalEntryProvider();
+    mockJournalProvider = MockJournalEntryProvider();
+    mockProfileProvider = MockProfileProvider();
   });
 
   Widget createHomeScreenUnderTest() {
-    return ChangeNotifierProvider<JournalEntryProvider>.value(
-      value: mockProvider,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<ProfileProvider>.value(value: mockProfileProvider),
+        ChangeNotifierProvider<JournalEntryProvider>.value(value: mockJournalProvider),
+      ],
       child: const MaterialApp(
         home: HomeScreenPage(),
       ),
@@ -28,68 +35,72 @@ void main() {
   }
 
   group('HomeScreenPage Widget Tests', () {
-    testWidgets('Shows CircularProgressIndicator when isLoading is true',
-            (WidgetTester tester) async {
-          // Arrange
-          when(mockProvider.isLoading).thenReturn(true);
-          when(mockProvider.entries).thenReturn([]); // or doesn't matter
-          // Act
-          await tester.pumpWidget(createHomeScreenUnderTest());
+    testWidgets('Shows CircularProgressIndicator when isLoading is true', (WidgetTester tester) async {
+      // setup / given / arrange : mock providers
+      when(mockProfileProvider.isLoading).thenReturn(false);
+      when(mockProfileProvider.profile).thenReturn(null);
+      when(mockJournalProvider.isLoading).thenReturn(true);
+      when(mockJournalProvider.entries).thenReturn([]);
 
-          // Assert
-          expect(find.byType(CircularProgressIndicator), findsOneWidget);
-          expect(find.text('No journal entries entered yet.'), findsNothing);
-        });
+      // Act - display widget to virtual screen
+      await tester.pumpWidget(createHomeScreenUnderTest());
 
-    testWidgets('Shows "No journal entries..." text when not loading and entries is empty',
-            (WidgetTester tester) async {
-          // Arrange
-          when(mockProvider.isLoading).thenReturn(false);
-          when(mockProvider.entries).thenReturn([]);
+      // Assert - we expect a circular progress spinner
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.text('No journal entries entered yet.'), findsNothing);
+    });
 
-          // Act
-          await tester.pumpWidget(createHomeScreenUnderTest());
+    testWidgets('Shows "No journal entries..." text when not loading and entries is empty', (WidgetTester tester) async {
+      // setup / given / arrange : mock providers
+      when(mockProfileProvider.isLoading).thenReturn(false);
+      when(mockProfileProvider.profile).thenReturn(null);
+      when(mockJournalProvider.isLoading).thenReturn(false);
+      when(mockJournalProvider.entries).thenReturn([]);
 
-          // Assert
-          expect(find.text('No journal entries entered yet.'), findsOneWidget);
-          expect(find.byType(ExpansionTile), findsNothing);
-        });
+      // Act - display widget to virtual screen
+      await tester.pumpWidget(createHomeScreenUnderTest());
 
-    testWidgets('Shows expansion tiles and entries when not loading and entries is not empty',
-            (WidgetTester tester) async {
-          // Arrange
-          when(mockProvider.isLoading).thenReturn(false);
+      // Assert
+      expect(find.text('No journal entries entered yet.'), findsOneWidget);
+      expect(find.byType(ExpansionTile), findsNothing);
+    });
 
-          final entry1 = JournalEntry(
-            entryID: '1',
-            userID: 'userA',
-            title: 'Title 1',
-            address: 'WA, United States',
-            timestamp: DateTime(2023, 1, 1),
-            latitude: 47.6062,
-            longitude: -122.3321,
-            imageURLs: [],
-            videoURLs: [],
-          );
+    testWidgets('Shows expansion tiles and entries when not loading and entries is not empty', (WidgetTester tester) async {
+      // setup / given / arrange : mock providers
+      when(mockProfileProvider.isLoading).thenReturn(false);
+      when(mockProfileProvider.profile).thenReturn(null);
+      when(mockJournalProvider.isLoading).thenReturn(false);
 
-          when(mockProvider.entries).thenReturn([entry1]);
+      final entry1 = JournalEntry(
+        entryID: '1',
+        userID: 'userA',
+        title: 'Title 1',
+        address: 'WA, United States',
+        timestamp: DateTime(2023, 1, 1),
+        latitude: 47.6062,
+        longitude: -122.3321,
+        imageURLs: [],
+        videoURLs: [],
+      );
 
-          // Act
-          await tester.pumpWidget(createHomeScreenUnderTest());
+      when(mockJournalProvider.entries).thenReturn([entry1]);
 
-          // Assert - we expect 1 ExpansionTile for WA
-          expect(find.byType(ExpansionTile), findsNWidgets(1));
+      // Act - display widget to virtual screen
+      await tester.pumpWidget(createHomeScreenUnderTest());
 
-          // Verify we see location text in tile
-          expect(find.text('WA, United States'), findsOneWidget);
+      // Assert - we expect 1 ExpansionTile for WA
+      expect(find.byType(ExpansionTile), findsNWidgets(1));
 
-          await tester.tap(find.text('WA, United States'));
-          await tester.pumpAndSettle();
-          await tester.ensureVisible(find.byType(EntryCard));
-          expect(find.byType(EntryCard), findsOneWidget);
-          expect(find.text('Title 1'), findsOneWidget);
-          await tester.pumpAndSettle();
-        });
+      // Verify we see location text in tile
+      expect(find.text('WA, United States'), findsOneWidget);
+
+      await tester.tap(find.text('WA, United States'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byType(EntryCard));
+      expect(find.byType(EntryCard), findsOneWidget);
+      expect(find.text('Title 1'), findsOneWidget);
+      await tester.pumpAndSettle();
+    });
   });
 }
 
