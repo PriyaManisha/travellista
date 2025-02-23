@@ -7,14 +7,15 @@ import 'package:travellista/util/theme_manager.dart';
 import 'package:travellista/providers/profile_provider.dart';
 
 class ProfilePageBody extends StatefulWidget {
-  const ProfilePageBody({super.key});
+  final StorageService? storageOverride;
+  const ProfilePageBody({super.key, this.storageOverride});
 
   @override
   State<ProfilePageBody> createState() => _ProfilePageBodyState();
 }
 
 class _ProfilePageBodyState extends State<ProfilePageBody> {
-  final StorageService _storageService = StorageService();
+  late StorageService _storageService = StorageService();
   final ImagePicker _picker = ImagePicker();
 
   // Booleans for loading states
@@ -31,6 +32,7 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
   @override
   void initState() {
     super.initState();
+    _storageService = widget.storageOverride ?? StorageService();
     // st using "demoUser" for now:
     context.read<ProfileProvider>().fetchProfile("demoUser");
   }
@@ -164,6 +166,7 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
           ),
           const SizedBox(width: 8),
           OutlinedButton(
+            key: const Key('dialogCancelButton'),
             onPressed: () {
               setState(() => _isEditing = false);
             },

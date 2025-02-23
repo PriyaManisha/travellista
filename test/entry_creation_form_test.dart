@@ -21,7 +21,7 @@ import 'entry_creation_form_test.mocks.dart';
 main() {
   group('EntryCreationForm - New Entry Tests', () {
     testWidgets('Creates a new entry with correct parameters from user input', (tester) async {
-      // setup / given / arrange : mock provider and storage service
+        // setup / given / arrange : mock provider and storage service
       final mockJournalProvider = MockJournalEntryProvider();
       final mockProfileProvider = MockProfileProvider();
       final mockStorage = MockStorageService();
