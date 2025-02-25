@@ -7,6 +7,7 @@ class SharedScaffold extends StatelessWidget {
   final String title;
   final List<Widget>? actions;
   final int selectedIndex;
+  final bool showBackButton;
 
   const SharedScaffold({
     super.key,
@@ -14,6 +15,7 @@ class SharedScaffold extends StatelessWidget {
     required this.title,
     this.actions,
     this.selectedIndex = 0,
+    this.showBackButton = false,
   });
 
   @override
@@ -22,6 +24,7 @@ class SharedScaffold extends StatelessWidget {
       appBar: AppBar(
         title: Text(title),
         actions: actions,
+        automaticallyImplyLeading: showBackButton,
       ),
       bottomNavigationBar: NavBar(selectedIndex: selectedIndex),
       body: body,

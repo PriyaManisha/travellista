@@ -64,12 +64,14 @@ class _HomeScreenPageState extends State<HomeScreenPage> {
   void initState() {
     super.initState();
 
-    final profileProvider = context.read<ProfileProvider>();
-    final journalProvider = context.read<JournalEntryProvider>();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final profileProvider = context.read<ProfileProvider>();
+      final journalProvider = context.read<JournalEntryProvider>();
 
-    String userID = profileProvider.profile?.userID ?? 'demoUser';
+      String userID = profileProvider.profile?.userID ?? 'demoUser';
 
-    journalProvider.fetchEntriesForUser(userID);
+      journalProvider.fetchEntriesForUser(userID);
+    });
   }
 
 

@@ -49,5 +49,7 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>GMSApiKey</key>
+    <string>AIzaSyDUJBdyOia-p-fgMxfXWcckB2xlJWquGOg</string>
 </dict>
 </plist>

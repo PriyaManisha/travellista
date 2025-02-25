@@ -19,20 +19,28 @@ class EntryCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       child: ListTile(
-        leading: entry.imageURLs!.isNotEmpty
-            ? Image.network((
-                entry.imageURLs![0]),
-                loadingBuilder: (context, child, progress) {
-                  if (progress == null) return child;
-                  return const Center(child: CircularProgressIndicator());
-                },)
-            : Icon(Icons.photo),
+        leading: SizedBox(
+          width: 50,
+          height: 50,
+          child: entry.imageURLs != null && entry.imageURLs!.isNotEmpty
+              ? Image.network(
+            entry.imageURLs![0],
+            fit: BoxFit.cover,
+            width: 50,
+            height: 50,
+            loadingBuilder: (context, child, progress) {
+              if (progress == null) return child;
+              return const Center(child: CircularProgressIndicator());
+            },
+          )
+              : const Icon(Icons.photo, size: 40),
+        ),
         title: Text(entry.title ?? 'Untitled'),
-        subtitle:
-            Text('${formattedDate}, ${formattedAddress}',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+        subtitle: Text(
+          '${formattedDate}, ${formattedAddress}',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         onTap: () {
           Navigator.push(
             context,

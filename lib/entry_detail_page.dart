@@ -61,6 +61,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
               padding: const EdgeInsets.all(16.0),
               child: _buildDetailBody(context, entry),
             ),
+            showBackButton: true,
           ),
           if (_isDeleting)
             Container(

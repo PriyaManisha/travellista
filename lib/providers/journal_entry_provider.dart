@@ -15,6 +15,8 @@ class JournalEntryProvider extends ChangeNotifier {
 
   // Fetch all entries
   Future<void> fetchEntriesForUser(String userID) async {
+    if (_isLoading) return;
+
     _isLoading = true;
     notifyListeners();
 
@@ -32,7 +34,10 @@ class JournalEntryProvider extends ChangeNotifier {
     }
 
     _isLoading = false;
-    notifyListeners();
+    //notifyListeners();
+    if (_entries.isNotEmpty) {
+      notifyListeners();
+    }
   }
 
   Future<void> addEntry(JournalEntry entry) async {

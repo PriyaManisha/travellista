@@ -123,25 +123,31 @@ class _MapViewPageState extends State<MapViewPage> {
           itemBuilder: (context, index) {
             final e = entries[index];
             return ListTile(
-              leading: e.imageURLs?.isNotEmpty == true
-                  ? Image.network(
-                e.imageURLs![0],
-                width: 60,
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) {
-                    return child;
-                  }
-                  return const Center(
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(),
-                    ),
-                  );
-                },
-              )
-                  : const Icon(Icons.photo),
+              leading: SizedBox(
+                width: 50,
+                height: 50,
+                child: e.imageURLs?.isNotEmpty == true
+                    ? ClipRRect(
+                  borderRadius: BorderRadius.circular(8.0),
+                  child: Image.network(
+                    e.imageURLs![0],
+                    width: 50,
+                    height: 50,
+                    fit: BoxFit.cover, // Ensures the image fits properly
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return const Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    },
+                  ),
+                )
+                    : const Icon(Icons.photo, size: 40),
+              ),
               title: Text(e.title ?? 'Untitled'),
               subtitle: Text('${e.address}'),
               onTap: () {
