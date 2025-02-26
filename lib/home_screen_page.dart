@@ -109,7 +109,7 @@ class _HomeScreenPageState extends State<HomeScreenPage> {
             final entriesForGroup = group.value;
             return ExpansionTile(
               key: UniqueKey(),
-              title: Text('$locationKey'),
+              title: Text(locationKey),
               leading: const Icon(Icons.location_on),
               trailing: const Icon(Icons.keyboard_arrow_down),
               textColor: Theme.of(context).colorScheme.primary,

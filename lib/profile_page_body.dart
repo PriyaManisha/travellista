@@ -52,17 +52,18 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
     }
 
     if (!_isEditing) {
-      _firstName = currentProfile?.firstName;
-      _lastName = currentProfile?.lastName;
-      _photoUrl = currentProfile?.photoUrl;
-      _displayName = currentProfile!.displayName;
+      _firstName = currentProfile.firstName;
+      _lastName = currentProfile.lastName;
+      _photoUrl = currentProfile.photoUrl;
+      _displayName = currentProfile.displayName;
       _email = currentProfile.email;
     }
 
     return Stack(
       children: [
         _buildMainContent(profileProvider),
-        if (_localIsSaving || (isLoadingProfile && currentProfile != null))
+        //currentProfile's "final" qualifier guarantees a non-null state
+        if (_localIsSaving || (isLoadingProfile /*&& currentProfile != null*/))
           _buildOverlaySpinner(),
       ],
     );

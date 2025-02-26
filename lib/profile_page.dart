@@ -11,7 +11,7 @@ class ProfilePage extends StatelessWidget {
     return const SharedScaffold(
       title: 'Profile',
       selectedIndex: 3,
-      body: const ProfilePageBody(),
+      body: ProfilePageBody(),
     );
   }
 }
