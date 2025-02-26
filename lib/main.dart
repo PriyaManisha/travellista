@@ -7,6 +7,10 @@ import 'package:travellista/providers/journal_entry_provider.dart';
 import 'package:travellista/providers/profile_provider.dart';
 import 'package:travellista/firebase_options.dart';
 
+import 'entry_creation_form.dart';
+import 'map_view_page.dart';
+import 'profile_page.dart';
+
 void main() async {
   // Initialize Firebase
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,7 +42,13 @@ class MyApp extends StatelessWidget {
             ),
             darkTheme: ThemeData.dark(),
             themeMode: currentTheme,
-            home: const HomeScreenPage(),
+            routes:{
+              "/home": (context) => const HomeScreenPage(),
+              "/add": (context) => const EntryCreationForm(),
+              "/map": (context) => const MapViewPage(),
+              "/profile": (context) => const ProfilePage()
+            },
+            initialRoute:"/home",
           );
         },
       ),

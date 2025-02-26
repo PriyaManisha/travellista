@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:travellista/profile_page.dart';
-import 'package:travellista/entry_creation_form.dart';
-import 'package:travellista/home_screen_page.dart';
-import 'package:travellista/map_view_page.dart';
 
 class NavBar extends StatelessWidget {
   final int selectedIndex;
@@ -11,24 +7,16 @@ class NavBar extends StatelessWidget {
   void _onItemTapped(BuildContext context, int index) {
     switch (index) {
       case 0:
-        Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const HomeScreenPage())
-        );
+        Navigator.pushNamed(context, "/home");
         break;
       case 1:
-        Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const EntryCreationForm())
-        );
+        Navigator.pushNamedAndRemoveUntil(context, "/add",ModalRoute.withName("/home"));
         break;
       case 2:
-        Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const MapViewPage())
-        );
+        Navigator.pushNamedAndRemoveUntil(context, "/map",ModalRoute.withName("/home"));
         break;
       case 3:
-        Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const ProfilePage())
-        );
+        Navigator.pushNamedAndRemoveUntil(context, "/profile",ModalRoute.withName("/home"));
         break;
     }
   }
