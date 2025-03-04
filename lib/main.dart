@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:travellista/home_screen_page.dart';
 import 'package:travellista/util/theme_manager.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:provider/provider.dart';
 import 'package:travellista/providers/journal_entry_provider.dart';
 import 'package:travellista/providers/profile_provider.dart';
 import 'package:travellista/firebase_options.dart';
+import 'package:travellista/entry_creation_form.dart';
+import 'package:travellista/map_view_page.dart';
+import 'package:travellista/profile_page.dart';
 
-import 'entry_creation_form.dart';
-import 'map_view_page.dart';
-import 'profile_page.dart';
-
-void main() async {
+Future<void> main() async {
   // Initialize Firebase
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
