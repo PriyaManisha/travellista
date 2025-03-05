@@ -16,8 +16,7 @@ class LocationService {
         if (data['status'] == 'OK') {
           final results = data['results'] as List<dynamic>;
           if (results.isNotEmpty) {
-            final addressComponents = results[0]['address_components'] as List<
-                dynamic>;
+            final addressComponents = results[0]['address_components'] as List<dynamic>;
 
             String? city;
             String? state;
@@ -25,22 +24,39 @@ class LocationService {
 
             for (final comp in addressComponents) {
               final types = comp['types'] as List<dynamic>;
-              if (types.contains('locality')) {
-                // City
-                city = comp['long_name'];
-              } else if (types.contains('administrative_area_level_1')) {
-                // State
-                state = comp['short_name']; // or 'long_name'
-              } else if (types.contains('country')) {
+
+              // Country
+              if (types.contains('country')) {
                 country = comp['long_name'];
+              }
+              // State/Province (administrative_area_level_1)
+              else if (types.contains('administrative_area_level_1')) {
+                state = comp['short_name']; // Use short_name for brevity (e.g., "RJ")
+              }
+
+              else if (types.contains('locality') && city == null) {
+                city = comp['long_name'];
+              }
+              else if (types.contains('administrative_area_level_2') && city == null) {
+                city = comp['long_name'];
               }
             }
 
-            // Build address string
+            // Build address string with flexible logic
             final parts = <String>[];
-            if (city != null) parts.add(city);
-            if (state != null) parts.add(state);
-            if (country != null) parts.add(country);
+
+            // If we have a city, add it; otherwise, skip it
+            if (city != null) {
+              parts.add(city);
+            }
+            // If we have a state and it's not redundant with city, add it
+            if (state != null && state != city) {
+              parts.add(state);
+            }
+            // Always add country if present
+            if (country != null) {
+              parts.add(country);
+            }
 
             final partialAddress = parts.join(', ');
             return partialAddress.isEmpty ? null : partialAddress;

@@ -3,16 +3,18 @@ import 'package:travellista/nav_bar.dart';
 
 /// Scaffold wrapper that includes the navbar
 class SharedScaffold extends StatelessWidget {
-  final Widget body;
-  final String title;
+  final Widget? titleWidget;
+  final String? title;
   final List<Widget>? actions;
+  final Widget body;
   final int selectedIndex;
   final bool showBackButton;
 
   const SharedScaffold({
     super.key,
+    this.titleWidget,
+    this.title,
     required this.body,
-    required this.title,
     this.actions,
     this.selectedIndex = 0,
     this.showBackButton = false,
@@ -22,7 +24,7 @@ class SharedScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(title),
+        title: titleWidget ?? (title != null ? Text(title!) : null),
         actions: actions,
         automaticallyImplyLeading: showBackButton,
       ),

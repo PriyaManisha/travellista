@@ -9,7 +9,7 @@ import 'package:travellista/shared_scaffold.dart';
 import 'package:travellista/entry_detail_page.dart';
 
 class MapViewPage extends StatefulWidget {
-  const MapViewPage({Key? key}) : super(key: key);
+  const MapViewPage({super.key});
 
   @override
   State<MapViewPage> createState() => _MapViewPageState();
