@@ -5,6 +5,7 @@ import 'package:travellista/models/journal_entry.dart';
 import 'package:travellista/providers/journal_entry_provider.dart';
 import 'package:travellista/providers/profile_provider.dart';
 import 'package:travellista/shared_scaffold.dart';
+import 'package:travellista/entry_search.dart';
 
 class HomeScreenPage extends StatefulWidget {
   const HomeScreenPage({super.key});

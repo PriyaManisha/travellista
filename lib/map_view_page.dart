@@ -7,6 +7,7 @@ import 'package:travellista/models/journal_entry.dart';
 import 'package:travellista/providers/journal_entry_provider.dart';
 import 'package:travellista/shared_scaffold.dart';
 import 'package:travellista/entry_detail_page.dart';
+import 'package:travellista/entry_search.dart';
 
 class MapViewPage extends StatefulWidget {
   const MapViewPage({super.key});
@@ -17,23 +18,27 @@ class MapViewPage extends StatefulWidget {
 
 class _MapViewPageState extends State<MapViewPage> {
   final Completer<GoogleMapController> _mapController = Completer();
-
   LatLngBounds? _overallBounds;
+
+  bool _isSearching = false;
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
     final entryProvider = context.watch<JournalEntryProvider>();
-    final entries = entryProvider.entries;
+    final allEntries = entryProvider.entries;
 
     if (entryProvider.isLoading) {
       return const SharedScaffold(
-        title: 'Map View',
+        title: 'Map View', // or remove if you want to use the search bar
         selectedIndex: 2,
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
-    final grouped = _groupEntriesByLatLng(entries);
+    final filteredEntries = _buildFilteredList(allEntries, _searchQuery);
+
+    final grouped = _groupEntriesByLatLng(filteredEntries);
     final Set<Marker> markers = {};
 
     for (var latLongKey in grouped.keys) {
@@ -53,7 +58,7 @@ class _MapViewPageState extends State<MapViewPage> {
       zoom: 3,
     );
 
-    // If minimum one marker, calc bounding box
+    // If we have at least one marker, figure out bounding box
     if (markers.isNotEmpty) {
       double minLat = double.infinity, maxLat = -double.infinity;
       double minLng = double.infinity, maxLng = -double.infinity;
@@ -64,15 +69,32 @@ class _MapViewPageState extends State<MapViewPage> {
         maxLng = max(maxLng, m.position.longitude);
       }
 
-      // Store bounds
       _overallBounds = LatLngBounds(
         southwest: LatLng(minLat, minLng),
         northeast: LatLng(maxLat, maxLng),
       );
     }
 
+    // 5) Return your SharedScaffold with the new search widget
     return SharedScaffold(
-      title: 'Map View',
+      // Instead of title: 'Map View', use the new search bar
+      titleWidget: EntrySearchBar(
+        title: 'Map View',
+        isSearching: _isSearching,
+        onSearchChanged: (val) {
+          setState(() {
+            _searchQuery = val;
+          });
+        },
+        onSearchToggled: (newVal) {
+          setState(() {
+            _isSearching = newVal;
+            if (!_isSearching) {
+              _searchQuery = '';
+            }
+          });
+        },
+      ),
       selectedIndex: 2,
       body: GoogleMap(
         initialCameraPosition: initialCameraPosition,
@@ -80,7 +102,7 @@ class _MapViewPageState extends State<MapViewPage> {
         onMapCreated: (controller) async {
           _mapController.complete(controller);
 
-          // Once the map created, fit to bounds
+          // Once the map is created, fit to bounds if we have them
           if (_overallBounds != null) {
             await Future.delayed(const Duration(milliseconds: 200));
             controller.animateCamera(
@@ -90,6 +112,23 @@ class _MapViewPageState extends State<MapViewPage> {
         },
       ),
     );
+  }
+
+  // Same filter logic as in home_screen_page
+  List<JournalEntry> _buildFilteredList(List<JournalEntry> allEntries, String query) {
+    if (!_isSearching || query.trim().isEmpty) {
+      return allEntries;
+    }
+    final lowerQuery = query.toLowerCase();
+
+    return allEntries.where((entry) {
+      final combinedText = (
+          (entry.title ?? '') +
+              (entry.address ?? '') +
+              (entry.tags?.join(' ') ?? '')
+      ).toLowerCase();
+      return combinedText.contains(lowerQuery);
+    }).toList();
   }
 
   // Group entries by lat,long
@@ -112,7 +151,7 @@ class _MapViewPageState extends State<MapViewPage> {
     return LatLng(lat, lng);
   }
 
-  // Show all entries for tapped marker
+  // Show bottom sheet with all entries at that marker
   void _showMarkerEntriesBottomSheet(BuildContext context, List<JournalEntry> entries) {
     showModalBottomSheet(
       context: context,
@@ -133,7 +172,7 @@ class _MapViewPageState extends State<MapViewPage> {
                     e.imageURLs![0],
                     width: 50,
                     height: 50,
-                    fit: BoxFit.cover, // Ensures the image fits properly
+                    fit: BoxFit.cover,
                     loadingBuilder: (context, child, loadingProgress) {
                       if (loadingProgress == null) return child;
                       return const Center(

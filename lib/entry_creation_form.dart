@@ -25,31 +25,36 @@ class EntryCreationForm extends StatefulWidget {
 class _EntryCreationFormState extends State<EntryCreationForm> {
   final _formKey = GlobalKey<FormState>();
   late final StorageService _storageService;
-  String? _pickedAddress = "Seattle, WA, United States";
 
-  // Controllers
+  // Location fields
+  String? _pickedAddress = "Seattle, WA, United States";
+  String? _pickedLocale;
+  String? _pickedRegion;
+  String? _pickedCountry;
+  LatLng _pickedLocation = const LatLng(47.60621, -122.33207);
+
+  // Basic text controllers
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
-  // State
-  DateTime _selectedDate = DateTime.now();
-  LatLng _pickedLocation = const LatLng(47.60621, -122.33207);
+  // Tag fields
+  final TextEditingController _tagController = TextEditingController();
+  List<String> _tags = []; // what we show as chips
 
-  // For newly picked files only
+  // Date
+  DateTime _selectedDate = DateTime.now();
+  String? _monthName;
+
+  // Media
   List<File> _imageFiles = [];
   List<File> _videoFiles = [];
-
-  // For old remote URLs we want to keep
   List<String> _oldImageURLs = [];
   List<String> _oldVideoURLs = [];
-
-  // For old remote URLs we want to remove
   final List<String> _removedOldImageURLs = [];
   final List<String> _removedOldVideoURLs = [];
 
-  // Track saving state
+  // State
   bool _isSaving = false;
-
   bool get _isEditMode => widget.existingEntry != null;
   final _picker = ImagePicker();
 
@@ -57,8 +62,10 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
   void initState() {
     super.initState();
     _storageService = widget.storageOverride ?? StorageService();
+
     if (_isEditMode) {
       final existing = widget.existingEntry!;
+      // Populate form fields
       _titleController.text = existing.title ?? '';
       _descriptionController.text = existing.description ?? '';
       if (existing.timestamp != null) {
@@ -67,110 +74,25 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
       if (existing.latitude != null && existing.longitude != null) {
         _pickedLocation = LatLng(existing.latitude!, existing.longitude!);
       }
-
+      _monthName = existing.monthName;
       _pickedAddress = existing.address;
+      _pickedLocale = existing.localeName;
+      _pickedRegion = existing.regionName;
+      _pickedCountry = existing.countryName;
 
-      // Keep old remote URLs
+      // Tags
+      _tags = existing.tags ?? [];
+      _tagController.text = _tags.join(', ');
+
+      // Old media
       if (existing.imageURLs != null) {
         _oldImageURLs = List.from(existing.imageURLs!);
       }
       if (existing.videoURLs != null) {
         _oldVideoURLs = List.from(existing.videoURLs!);
       }
-    }
-  }
-
-  String _getFileExtension(String filePath) {
-    final dotIndex = filePath.lastIndexOf('.');
-    if (dotIndex == -1) return '';
-    return filePath.substring(dotIndex).toLowerCase();
-  }
-
-  Future<void> _saveEntry(String userID) async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _isSaving = true);
-
-    try {
-    // 1. Upload newly picked images
-    final newImageURLs = <String>[];
-    for (File imageFile in _imageFiles) {
-      final ext = _getFileExtension(imageFile.path);
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}$ext';
-      final imageURL = await _storageService.uploadFile(
-        imageFile,
-        'images/$fileName',
-      );
-      newImageURLs.add(imageURL);
-    }
-
-    // 2. Upload newly picked videos
-    final newVideoURLs = <String>[];
-    for (File videoFile in _videoFiles) {
-      final ext = _getFileExtension(videoFile.path);
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}$ext';
-      final videoURL = await _storageService.uploadFile(
-        videoFile,
-        'videos/$fileName',
-      );
-      newVideoURLs.add(videoURL);
-    }
-
-    // 3. Remove old media that user chose to remove
-    for (final url in _removedOldImageURLs) {
-      await _storageService.deleteFileByUrl(url);
-    }
-    for (final url in _removedOldVideoURLs) {
-      await _storageService.deleteFileByUrl(url);
-    }
-
-    // Exclude from final arrays
-    _oldImageURLs.removeWhere((url) => _removedOldImageURLs.contains(url));
-    _oldVideoURLs.removeWhere((url) => _removedOldVideoURLs.contains(url));
-
-    // 4. Combine old + new
-    final finalImageURLs = [..._oldImageURLs, ...newImageURLs];
-    final finalVideoURLs = [..._oldVideoURLs, ...newVideoURLs];
-
-    // 5. Create or update the JournalEntry
-    final updatedEntry = JournalEntry(
-      entryID: widget.existingEntry?.entryID,
-      userID: widget.existingEntry?.userID ?? 'demoUser',
-      title: _titleController.text,
-      description: _descriptionController.text,
-      timestamp: _selectedDate,
-      latitude: _pickedLocation.latitude,
-      longitude: _pickedLocation.longitude,
-      address: _pickedAddress,
-      imageURLs: finalImageURLs,
-      videoURLs: finalVideoURLs,
-    );
-
-    final provider = context.read<JournalEntryProvider>();
-
-    if (_isEditMode) {
-      await provider.updateEntry(updatedEntry.entryID!, updatedEntry);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Entry updated successfully!')),
-      );
     } else {
-      await provider.addEntry(updatedEntry);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Entry saved successfully!')),
-      );
-    }
-
-    } catch (e) {
-      print('Exception caught: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error saving entry')),
-      );
-    } finally {
-      setState(() => _isSaving = false);
-    }
-
-    if (mounted) {
-      Navigator.pop(context);
+      _monthName = DateFormat('MMMM').format(_selectedDate);
     }
   }
 
@@ -178,6 +100,7 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
   Widget build(BuildContext context) {
     final profileProvider = context.watch<ProfileProvider>();
     final userID = profileProvider.profile?.userID ?? 'demoUser';
+
     return Stack(
       children: [
         SharedScaffold(
@@ -200,6 +123,7 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
                     _buildDescriptionField(),
                     _buildDatePicker(),
                     _buildLocationPicker(),
+                    _buildTagField(),
                     const SizedBox(height: 8),
                     _buildImagePicker(),
                     const SizedBox(height: 8),
@@ -218,7 +142,6 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
             ),
           ),
         ),
-
         if (_isSaving)
           Container(
             color: Colors.black54,
@@ -233,7 +156,7 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
   }
 
   //-------------------------------------------------------------------------
-  // UI WIDGETS
+  // BUILDERS
   //-------------------------------------------------------------------------
 
   Widget _buildTitleField() {
@@ -256,7 +179,6 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
   Widget _buildDatePicker() {
     final dateStr = DateFormat('MM/dd/yyyy').format(_selectedDate);
     return ListTile(
-      //title: Text('Date: ${_selectedDate.toLocal()}'.split(' ')[0]),
       title: Text('Date: $dateStr'),
       trailing: const Icon(Icons.calendar_today),
       onTap: _pickDate,
@@ -271,7 +193,10 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
       lastDate: DateTime(2101),
     );
     if (pickedDate != null && pickedDate != _selectedDate) {
-      setState(() => _selectedDate = pickedDate);
+      setState(() {
+        _selectedDate = pickedDate;
+        _monthName = DateFormat('MMMM').format(_selectedDate);
+      });
     }
   }
 
@@ -299,15 +224,183 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
           setState(() {
             _pickedLocation = result.latLng!;
             _pickedAddress = result.address;
+            _pickedLocale = result.locale;
+            _pickedRegion = result.region;
+            _pickedCountry = result.country;
           });
         }
       },
     );
   }
 
+  // Field for tags
+  Widget _buildTagField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Tags (comma separated)'),
+        TextFormField(
+          controller: _tagController,
+          decoration: const InputDecoration(
+            hintText: 'e.g. beach, hiking, summer',
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        // Show the current list of tags as chips
+        Wrap(
+          spacing: 6.0,
+          runSpacing: -4.0,
+          children: _tags.map((tag) {
+            return Chip(
+              label: Text(tag),
+              deleteIcon: const Icon(Icons.close),
+              onDeleted: () => setState(() {
+                _tags.remove(tag);
+              }),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
   //-------------------------------------------------------------------------
-  // IMAGE PICKER + REMOVAL
+  // SAVE LOGIC
   //-------------------------------------------------------------------------
+
+  Future<void> _saveEntry(String userID) async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSaving = true);
+
+    try {
+      // 1) Upload new images
+      final newImageURLs = await _uploadNewImages();
+
+      // 2) Upload new videos
+      final newVideoURLs = await _uploadNewVideos();
+
+      // 3) Remove old media
+      await _removeOldMedia();
+
+      // 4) Combine old + new
+      final finalImageURLs = [..._oldImageURLs, ...newImageURLs];
+      final finalVideoURLs = [..._oldVideoURLs, ...newVideoURLs];
+
+      // 5) Parse text field tags
+      final typedTags = _tagController.text
+          .split(',')
+          .map((t) => t.trim())
+          .where((t) => t.isNotEmpty)
+          .toList();
+
+      // Merge typed tags + existing _tags (minus any user removed)
+      final finalTags = {..._tags, ...typedTags}.toList();
+
+      // 6) Create or update the JournalEntry
+      final updatedEntry = JournalEntry(
+        entryID: widget.existingEntry?.entryID,
+        userID: widget.existingEntry?.userID ?? 'demoUser',
+        title: _titleController.text,
+        description: _descriptionController.text,
+        timestamp: _selectedDate,
+        latitude: _pickedLocation.latitude,
+        longitude: _pickedLocation.longitude,
+        address: _pickedAddress,
+        imageURLs: finalImageURLs,
+        videoURLs: finalVideoURLs,
+        localeName: _pickedLocale,
+        regionName: _pickedRegion,
+        countryName: _pickedCountry,
+        tags: finalTags,
+        monthName: _monthName,
+      );
+
+      final provider = context.read<JournalEntryProvider>();
+
+      if (_isEditMode) {
+        await provider.updateEntry(updatedEntry.entryID!, updatedEntry);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Entry updated successfully!')),
+        );
+      } else {
+        await provider.addEntry(updatedEntry);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Entry saved successfully!')),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error saving entry: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error saving entry')),
+      );
+    } finally {
+      setState(() => _isSaving = false);
+    }
+
+    if (mounted) Navigator.pop(context);
+  }
+
+  Future<List<String>> _uploadNewImages() async {
+    final newImageURLs = <String>[];
+    for (File imageFile in _imageFiles) {
+      final ext = _getFileExtension(imageFile.path);
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}$ext';
+      final imageURL = await _storageService.uploadFile(
+        imageFile,
+        'images/$fileName',
+      );
+      newImageURLs.add(imageURL);
+    }
+    return newImageURLs;
+  }
+
+  Future<List<String>> _uploadNewVideos() async {
+    final newVideoURLs = <String>[];
+    for (File videoFile in _videoFiles) {
+      final ext = _getFileExtension(videoFile.path);
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}$ext';
+      final videoURL = await _storageService.uploadFile(
+        videoFile,
+        'videos/$fileName',
+      );
+      newVideoURLs.add(videoURL);
+    }
+    return newVideoURLs;
+  }
+
+  Future<void> _removeOldMedia() async {
+    for (final url in _removedOldImageURLs) {
+      await _storageService.deleteFileByUrl(url);
+    }
+    for (final url in _removedOldVideoURLs) {
+      await _storageService.deleteFileByUrl(url);
+    }
+    // Exclude from final arrays
+    _oldImageURLs.removeWhere((url) => _removedOldImageURLs.contains(url));
+    _oldVideoURLs.removeWhere((url) => _removedOldVideoURLs.contains(url));
+  }
+
+  String _getFileExtension(String filePath) {
+    final dotIndex = filePath.lastIndexOf('.');
+    if (dotIndex == -1) return '';
+    return filePath.substring(dotIndex).toLowerCase();
+  }
+
+  //-------------------------------------------------------------------------
+  // IMAGE / VIDEO PICKER
+  //-------------------------------------------------------------------------
+
+  Widget _buildImagePicker() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildNewImagesSection(),
+        _buildExistingImagesSection(),
+      ],
+    );
+  }
 
   Widget _buildNewImagesSection() {
     return Column(
@@ -323,11 +416,9 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
               final file = _imageFiles[index];
               return _buildRemovableThumbnail(
                 child: Image.file(file),
-                onRemove: () {
-                  setState(() {
-                    _imageFiles.removeAt(index);
-                  });
-                },
+                onRemove: () => setState(() {
+                  _imageFiles.removeAt(index);
+                }),
               );
             },
           ),
@@ -338,6 +429,15 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
         ),
       ],
     );
+  }
+
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _imageFiles.add(File(pickedFile.path));
+      });
+    }
   }
 
   Widget _buildExistingImagesSection() {
@@ -356,12 +456,10 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
               final url = _oldImageURLs[index];
               return _buildRemovableThumbnail(
                 child: Image.network(url),
-                onRemove: () {
-                  setState(() {
-                    _removedOldImageURLs.add(url);
-                    _oldImageURLs.remove(url);
-                  });
-                },
+                onRemove: () => setState(() {
+                  _removedOldImageURLs.add(url);
+                  _oldImageURLs.removeAt(index);
+                }),
               );
             },
           ),
@@ -392,29 +490,15 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
     );
   }
 
-  Widget _buildImagePicker() {
+  Widget _buildVideoPicker() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildNewImagesSection(),
-        _buildExistingImagesSection(),
+        _buildNewVideosSection(),
+        _buildExistingVideosSection(),
       ],
     );
   }
-
-
-  Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _imageFiles.add(File(pickedFile.path));
-      });
-    }
-  }
-
-  //-------------------------------------------------------------------------
-  // VIDEO PICKER + REMOVAL
-  //-------------------------------------------------------------------------
 
   Widget _buildNewVideosSection() {
     return Column(
@@ -455,7 +539,6 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
 
   Widget _buildExistingVideosSection() {
     if (_oldVideoURLs.isEmpty) return const SizedBox.shrink();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -479,7 +562,7 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
                 onRemove: () {
                   setState(() {
                     _removedOldVideoURLs.add(url);
-                    _oldVideoURLs.remove(url);
+                    _oldVideoURLs.removeAt(index);
                   });
                 },
               );
@@ -512,17 +595,6 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
     );
   }
 
-  Widget _buildVideoPicker() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildNewVideosSection(),
-        _buildExistingVideosSection(),
-      ],
-    );
-  }
-
-
   Future<void> _pickVideo() async {
     final pickedFile = await _picker.pickVideo(source: ImageSource.gallery);
     if (pickedFile != null) {
@@ -532,3 +604,598 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
     }
   }
 }
+
+
+
+// import 'dart:io';
+// import 'package:flutter/material.dart';
+// import 'package:image_picker/image_picker.dart';
+// import 'package:google_maps_flutter/google_maps_flutter.dart';
+// import 'package:intl/intl.dart';
+// import 'package:provider/provider.dart';
+// import 'package:travellista/models/journal_entry.dart';
+// import 'package:travellista/providers/journal_entry_provider.dart';
+// import 'package:travellista/providers/profile_provider.dart';
+// import 'package:travellista/shared_scaffold.dart';
+// import 'package:travellista/util/storage_service.dart';
+// import 'package:travellista/video_player_widget.dart';
+// import 'package:travellista/location_picker_screen.dart';
+//
+// class EntryCreationForm extends StatefulWidget {
+//   final JournalEntry? existingEntry;
+//   final StorageService? storageOverride;
+//
+//   const EntryCreationForm({super.key, this.existingEntry, this.storageOverride});
+//
+//   @override
+//   _EntryCreationFormState createState() => _EntryCreationFormState();
+// }
+//
+// class _EntryCreationFormState extends State<EntryCreationForm> {
+//   final _formKey = GlobalKey<FormState>();
+//   late final StorageService _storageService;
+//   String? _pickedAddress = "Seattle, WA, United States";
+//   String? _pickedLocale;
+//   String? _pickedRegion;
+//   String? _pickedCountry;
+//
+//   // Controllers
+//   final TextEditingController _titleController = TextEditingController();
+//   final TextEditingController _descriptionController = TextEditingController();
+//   final TextEditingController _tagController = TextEditingController();
+//
+//   // State
+//   DateTime _selectedDate = DateTime.now();
+//   LatLng _pickedLocation = const LatLng(47.60621, -122.33207);
+//   List<String> _tags = [];
+//
+//   // For newly picked files only
+//   List<File> _imageFiles = [];
+//   List<File> _videoFiles = [];
+//
+//   // For old remote URLs we want to keep
+//   List<String> _oldImageURLs = [];
+//   List<String> _oldVideoURLs = [];
+//
+//   // For old remote URLs we want to remove
+//   final List<String> _removedOldImageURLs = [];
+//   final List<String> _removedOldVideoURLs = [];
+//
+//   // Track saving state
+//   bool _isSaving = false;
+//
+//   bool get _isEditMode => widget.existingEntry != null;
+//   final _picker = ImagePicker();
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//     _storageService = widget.storageOverride ?? StorageService();
+//     if (_isEditMode) {
+//       final existing = widget.existingEntry!;
+//       _tags = existing.tags ?? [];
+//       _tagController.text = _tags.join(', ');
+//       _titleController.text = existing.title ?? '';
+//       _descriptionController.text = existing.description ?? '';
+//       if (existing.timestamp != null) {
+//         _selectedDate = existing.timestamp!;
+//       }
+//       if (existing.latitude != null && existing.longitude != null) {
+//         _pickedLocation = LatLng(existing.latitude!, existing.longitude!);
+//       }
+//
+//       _pickedAddress = existing.address;
+//       _pickedLocale = existing.localeName;
+//       _pickedRegion = existing.regionName;
+//       _pickedCountry = existing.countryName;
+//
+//       // Keep old remote URLs
+//       if (existing.imageURLs != null) {
+//         _oldImageURLs = List.from(existing.imageURLs!);
+//       }
+//       if (existing.videoURLs != null) {
+//         _oldVideoURLs = List.from(existing.videoURLs!);
+//       }
+//     }
+//   }
+//
+//   String _getFileExtension(String filePath) {
+//     final dotIndex = filePath.lastIndexOf('.');
+//     if (dotIndex == -1) return '';
+//     return filePath.substring(dotIndex).toLowerCase();
+//   }
+//
+//   Future<void> _saveEntry(String userID) async {
+//     if (!_formKey.currentState!.validate()) return;
+//
+//     setState(() => _isSaving = true);
+//
+//     try {
+//     // 1. Upload newly picked images
+//     final newImageURLs = <String>[];
+//     for (File imageFile in _imageFiles) {
+//       final ext = _getFileExtension(imageFile.path);
+//       final fileName = '${DateTime.now().millisecondsSinceEpoch}$ext';
+//       final imageURL = await _storageService.uploadFile(
+//         imageFile,
+//         'images/$fileName',
+//       );
+//       newImageURLs.add(imageURL);
+//     }
+//
+//     // 2. Upload newly picked videos
+//     final newVideoURLs = <String>[];
+//     for (File videoFile in _videoFiles) {
+//       final ext = _getFileExtension(videoFile.path);
+//       final fileName = '${DateTime.now().millisecondsSinceEpoch}$ext';
+//       final videoURL = await _storageService.uploadFile(
+//         videoFile,
+//         'videos/$fileName',
+//       );
+//       newVideoURLs.add(videoURL);
+//     }
+//
+//     // 3. Remove old media that user chose to remove
+//     for (final url in _removedOldImageURLs) {
+//       await _storageService.deleteFileByUrl(url);
+//     }
+//     for (final url in _removedOldVideoURLs) {
+//       await _storageService.deleteFileByUrl(url);
+//     }
+//
+//     // Exclude from final arrays
+//     _oldImageURLs.removeWhere((url) => _removedOldImageURLs.contains(url));
+//     _oldVideoURLs.removeWhere((url) => _removedOldVideoURLs.contains(url));
+//
+//     // 4. Combine old + new media
+//     final finalImageURLs = [..._oldImageURLs, ...newImageURLs];
+//     final finalVideoURLs = [..._oldVideoURLs, ...newVideoURLs];
+//
+//     // 5. Parse tags
+//     final typedTags = _tagController.text
+//         .split(',')
+//         .map((t) => t.trim())
+//         .where((t) => t.isNotEmpty)
+//         .toList();
+//
+//     final finalTags = {..._tags, ...typedTags}.toList();
+//
+//     // 6. Create or update the JournalEntry
+//     final updatedEntry = JournalEntry(
+//       entryID: widget.existingEntry?.entryID,
+//       userID: widget.existingEntry?.userID ?? 'demoUser',
+//       title: _titleController.text,
+//       description: _descriptionController.text,
+//       timestamp: _selectedDate,
+//       latitude: _pickedLocation.latitude,
+//       longitude: _pickedLocation.longitude,
+//       address: _pickedAddress,
+//       imageURLs: finalImageURLs,
+//       videoURLs: finalVideoURLs,
+//       localeName: _pickedLocale,
+//       regionName: _pickedRegion,
+//       countryName: _pickedCountry,
+//       tags: finalTags,
+//     );
+//
+//     final provider = context.read<JournalEntryProvider>();
+//
+//     if (_isEditMode) {
+//       await provider.updateEntry(updatedEntry.entryID!, updatedEntry);
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         const SnackBar(content: Text('Entry updated successfully!')),
+//       );
+//     } else {
+//       await provider.addEntry(updatedEntry);
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         const SnackBar(content: Text('Entry saved successfully!')),
+//       );
+//     }
+//
+//     } catch (e) {
+//       print('Exception caught: $e');
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         const SnackBar(content: Text('Error saving entry')),
+//       );
+//     } finally {
+//       setState(() => _isSaving = false);
+//     }
+//
+//     if (mounted) {
+//       Navigator.pop(context);
+//     }
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     final profileProvider = context.watch<ProfileProvider>();
+//     final userID = profileProvider.profile?.userID ?? 'demoUser';
+//     return Stack(
+//       children: [
+//         SharedScaffold(
+//           title: _isEditMode ? 'Edit Entry' : 'Create New Entry',
+//           selectedIndex: 1,
+//           body: GestureDetector(
+//             behavior: HitTestBehavior.translucent,
+//             onTap: () => FocusScope.of(context).unfocus(),
+//             child: SingleChildScrollView(
+//               padding: EdgeInsets.only(
+//                 left: 16.0,
+//                 right: 16.0,
+//                 bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+//               ),
+//               child: Form(
+//                 key: _formKey,
+//                 child: Column(
+//                   children: [
+//                     _buildTitleField(),
+//                     _buildDescriptionField(),
+//                     _buildDatePicker(),
+//                     _buildLocationPicker(),
+//                     _buildTagField(),
+//                     const SizedBox(height: 8),
+//                     _buildImagePicker(),
+//                     const SizedBox(height: 8),
+//                     _buildVideoPicker(),
+//                     const SizedBox(height: 20),
+//                     ElevatedButton(
+//                       onPressed: () {
+//                         _saveEntry(userID);
+//                       },
+//                       child: Text(_isEditMode ? 'Update Entry' : 'Save Entry'),
+//                     ),
+//                     const SizedBox(height: 20),
+//                   ],
+//                 ),
+//               ),
+//             ),
+//           ),
+//         ),
+//         if (_isSaving)
+//           Container(
+//             color: Colors.black54,
+//             child: const Center(
+//               child: CircularProgressIndicator(
+//                 color: Colors.white,
+//               ),
+//             ),
+//           ),
+//       ],
+//     );
+//   }
+//
+//   //-------------------------------------------------------------------------
+//   // UI WIDGETS
+//   //-------------------------------------------------------------------------
+//
+//   Widget _buildTitleField() {
+//     return TextFormField(
+//       controller: _titleController,
+//       decoration: const InputDecoration(labelText: 'Title'),
+//       validator: (value) =>
+//       (value == null || value.isEmpty) ? 'Please enter a title' : null,
+//     );
+//   }
+//
+//   Widget _buildDescriptionField() {
+//     return TextFormField(
+//       controller: _descriptionController,
+//       decoration: const InputDecoration(labelText: 'Description'),
+//       maxLines: 3,
+//     );
+//   }
+//
+//   Widget _buildDatePicker() {
+//     final dateStr = DateFormat('MM/dd/yyyy').format(_selectedDate);
+//     return ListTile(
+//       //title: Text('Date: ${_selectedDate.toLocal()}'.split(' ')[0]),
+//       title: Text('Date: $dateStr'),
+//       trailing: const Icon(Icons.calendar_today),
+//       onTap: _pickDate,
+//     );
+//   }
+//
+//   Future<void> _pickDate() async {
+//     final pickedDate = await showDatePicker(
+//       context: context,
+//       initialDate: _selectedDate,
+//       firstDate: DateTime(2000),
+//       lastDate: DateTime(2101),
+//     );
+//     if (pickedDate != null && pickedDate != _selectedDate) {
+//       setState(() => _selectedDate = pickedDate);
+//     }
+//   }
+//
+//   Widget _buildLocationPicker() {
+//     final bool hasAddress = _pickedAddress != null && _pickedAddress!.isNotEmpty;
+//     final displayedLocation = hasAddress
+//         ? 'Location: $_pickedAddress'
+//         : 'Location: ${_pickedLocation.latitude}, ${_pickedLocation.longitude}';
+//
+//     return ListTile(
+//       title: Text(displayedLocation),
+//       subtitle: const Text('Tap to pick a location'),
+//       trailing: const Icon(Icons.map),
+//       onTap: () async {
+//         final result = await Navigator.push<PickedLocationResult>(
+//           context,
+//           MaterialPageRoute(
+//             builder: (_) => LocationPickerScreen(
+//               initialLocation: _pickedLocation,
+//               initialAddress: _pickedAddress,
+//             ),
+//           ),
+//         );
+//         if (result != null && result.latLng != null) {
+//           setState(() {
+//             _pickedLocation = result.latLng!;
+//             _pickedAddress = result.address;
+//             _pickedLocale = result.locale;
+//             _pickedRegion = result.region;
+//             _pickedCountry = result.country;
+//           });
+//         }
+//       },
+//     );
+//   }
+//
+//   Widget _buildTagField() {
+//     return Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         const Text('Tags (comma separated)'),
+//         TextFormField(
+//           controller: _tagController,
+//           decoration: const InputDecoration(
+//             hintText: 'e.g. beach, hiking, summer',
+//           ),
+//         ),
+//         const SizedBox(height: 8),
+//
+//         // A simple preview of the current tags as chips
+//         Wrap(
+//           spacing: 4.0,
+//           runSpacing: -8.0,
+//           children: _tags.map((tag) {
+//             return Chip(
+//               label: Text(tag),
+//               deleteIcon: const Icon(Icons.close),
+//               onDeleted: () => setState(() {
+//                 _tags.remove(tag);
+//               }),
+//             );
+//           }).toList(),
+//         ),
+//       ],
+//     );
+//   }
+//
+//
+//   //-------------------------------------------------------------------------
+//   // IMAGE PICKER + REMOVAL
+//   //-------------------------------------------------------------------------
+//
+//   Widget _buildNewImagesSection() {
+//     return Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         const Text('New Images:', style: TextStyle(fontWeight: FontWeight.bold)),
+//         SizedBox(
+//           height: 100,
+//           child: ListView.builder(
+//             scrollDirection: Axis.horizontal,
+//             itemCount: _imageFiles.length,
+//             itemBuilder: (context, index) {
+//               final file = _imageFiles[index];
+//               return _buildRemovableThumbnail(
+//                 child: Image.file(file),
+//                 onRemove: () {
+//                   setState(() {
+//                     _imageFiles.removeAt(index);
+//                   });
+//                 },
+//               );
+//             },
+//           ),
+//         ),
+//         ElevatedButton(
+//           onPressed: _pickImage,
+//           child: const Text('Add Image'),
+//         ),
+//       ],
+//     );
+//   }
+//
+//   Widget _buildExistingImagesSection() {
+//     if (_oldImageURLs.isEmpty) return const SizedBox.shrink();
+//     return Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         const SizedBox(height: 8),
+//         const Text('Existing Images:', style: TextStyle(fontWeight: FontWeight.bold)),
+//         SizedBox(
+//           height: 100,
+//           child: ListView.builder(
+//             scrollDirection: Axis.horizontal,
+//             itemCount: _oldImageURLs.length,
+//             itemBuilder: (context, index) {
+//               final url = _oldImageURLs[index];
+//               return _buildRemovableThumbnail(
+//                 child: Image.network(url),
+//                 onRemove: () {
+//                   setState(() {
+//                     _removedOldImageURLs.add(url);
+//                     _oldImageURLs.remove(url);
+//                   });
+//                 },
+//               );
+//             },
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+//
+//   Widget _buildRemovableThumbnail({
+//     required Widget child,
+//     required VoidCallback onRemove,
+//   }) {
+//     return Stack(
+//       children: [
+//         Padding(
+//           padding: const EdgeInsets.only(right: 8.0),
+//           child: child,
+//         ),
+//         Positioned(
+//           top: 0,
+//           right: 0,
+//           child: IconButton(
+//             icon: const Icon(Icons.close, color: Colors.red),
+//             onPressed: onRemove,
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+//
+//   Widget _buildImagePicker() {
+//     return Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         _buildNewImagesSection(),
+//         _buildExistingImagesSection(),
+//       ],
+//     );
+//   }
+//
+//
+//   Future<void> _pickImage() async {
+//     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+//     if (pickedFile != null) {
+//       setState(() {
+//         _imageFiles.add(File(pickedFile.path));
+//       });
+//     }
+//   }
+//
+//   //-------------------------------------------------------------------------
+//   // VIDEO PICKER + REMOVAL
+//   //-------------------------------------------------------------------------
+//
+//   Widget _buildNewVideosSection() {
+//     return Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         const Text('New Videos:', style: TextStyle(fontWeight: FontWeight.bold)),
+//         SizedBox(
+//           height: 200,
+//           child: ListView.builder(
+//             scrollDirection: Axis.horizontal,
+//             itemCount: _videoFiles.length,
+//             itemBuilder: (context, index) {
+//               final file = _videoFiles[index];
+//               return _buildRemovableVideo(
+//                 child: SizedBox(
+//                   width: 200,
+//                   child: AspectRatio(
+//                     aspectRatio: 16 / 9,
+//                     child: ChewieVideoPlayer(videoFile: file),
+//                   ),
+//                 ),
+//                 onRemove: () {
+//                   setState(() {
+//                     _videoFiles.removeAt(index);
+//                   });
+//                 },
+//               );
+//             },
+//           ),
+//         ),
+//         ElevatedButton(
+//           onPressed: _pickVideo,
+//           child: const Text('Add Video'),
+//         ),
+//       ],
+//     );
+//   }
+//
+//   Widget _buildExistingVideosSection() {
+//     if (_oldVideoURLs.isEmpty) return const SizedBox.shrink();
+//
+//     return Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         const SizedBox(height: 8),
+//         const Text('Existing Videos:', style: TextStyle(fontWeight: FontWeight.bold)),
+//         SizedBox(
+//           height: 200,
+//           child: ListView.builder(
+//             scrollDirection: Axis.horizontal,
+//             itemCount: _oldVideoURLs.length,
+//             itemBuilder: (context, index) {
+//               final url = _oldVideoURLs[index];
+//               return _buildRemovableVideo(
+//                 child: SizedBox(
+//                   width: 200,
+//                   child: AspectRatio(
+//                     aspectRatio: 16 / 9,
+//                     child: ChewieVideoPlayer(videoUrl: url),
+//                   ),
+//                 ),
+//                 onRemove: () {
+//                   setState(() {
+//                     _removedOldVideoURLs.add(url);
+//                     _oldVideoURLs.remove(url);
+//                   });
+//                 },
+//               );
+//             },
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+//
+//   Widget _buildRemovableVideo({
+//     required Widget child,
+//     required VoidCallback onRemove,
+//   }) {
+//     return Stack(
+//       children: [
+//         Padding(
+//           padding: const EdgeInsets.only(right: 8.0),
+//           child: child,
+//         ),
+//         Positioned(
+//           top: 0,
+//           right: 0,
+//           child: IconButton(
+//             icon: const Icon(Icons.close, color: Colors.red),
+//             onPressed: onRemove,
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+//
+//   Widget _buildVideoPicker() {
+//     return Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         _buildNewVideosSection(),
+//         _buildExistingVideosSection(),
+//       ],
+//     );
+//   }
+//
+//
+//   Future<void> _pickVideo() async {
+//     final pickedFile = await _picker.pickVideo(source: ImageSource.gallery);
+//     if (pickedFile != null) {
+//       setState(() {
+//         _videoFiles.add(File(pickedFile.path));
+//       });
+//     }
+//   }
+// }

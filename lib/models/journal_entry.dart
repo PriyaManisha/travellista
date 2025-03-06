@@ -13,6 +13,10 @@ class JournalEntry {
   List<String>? _videoURLs;
   List<String>? _tags;
   String? _address;
+  String? _monthName;
+  String? _localeName;
+  String? _regionName;
+  String? _countryName;
 
   JournalEntry({
     String? entryID,
@@ -26,6 +30,10 @@ class JournalEntry {
     List<String>? videoURLs = const [],
     List<String>? tags = const [],
     String? address,
+    String? monthName,
+    String? localeName,
+    String? regionName,
+    String? countryName,
   })  : _entryID = entryID,
         _userID = userID,
         _timestamp = timestamp,
@@ -36,7 +44,11 @@ class JournalEntry {
         _imageURLs = imageURLs,
         _videoURLs = videoURLs,
         _tags = tags,
-        _address = address;
+        _address = address,
+        _monthName = monthName,
+        _localeName = localeName,
+        _regionName = regionName,
+        _countryName = countryName;
 
   JournalEntry.newEntry({
     required String userID,
@@ -73,41 +85,23 @@ class JournalEntry {
     }
   }
 
-  set timestamp(DateTime? newTimestamp) {
-    _timestamp = newTimestamp;
-  }
+  set timestamp(DateTime? newTimestamp) => _timestamp = newTimestamp;
+  set latitude(double? newLatitude) => _latitude = newLatitude;
+  set longitude(double? newLongitude) => _longitude = newLongitude;
+  set title(String? newTitle) => _title = newTitle;
+  set description(String? newDescription) => _description = newDescription;
+  set imageURLs(List<String>? newImageURLs) => _imageURLs = newImageURLs;
+  set videoURLs(List<String>? newVideoURLs) => _videoURLs = newVideoURLs;
+  set tags(List<String>? newTags) => _tags = newTags;
+  set address(String? newAddress) => _address = newAddress;
+  set monthName(String? newMonthName) => _monthName = newMonthName;
+  set localeName(String? newLocaleName) => _localeName = newLocaleName;
+  set regionName(String? newRegionName) => _regionName = newRegionName;
+  set countryName(String? newCountryName) => _countryName = newCountryName;
 
-  set latitude(double? newLatitude) {
-    _latitude = newLatitude;
-  }
+  // Getters
 
-  set longitude(double? newLongitude) {
-    _longitude = newLongitude;
-  }
-
-  set title(String? newTitle) {
-    _title = newTitle;
-  }
-
-  set description(String? newDescription) {
-    _description = newDescription;
-  }
-
-  set imageURLs(List<String>? newImageURLs) {
-    _imageURLs = newImageURLs;
-  }
-
-  set videoURLs(List<String>? newVideoURLs) {
-    _videoURLs = newVideoURLs;
-  }
-
-  set tags(List<String>? newTags) {
-    _tags = newTags;
-  }
-
-  // Getters and setters
-  String? get entryID =>
-      _entryID;
+  String? get entryID => _entryID;
   String get userID => _userID;
   DateTime? get timestamp => _timestamp;
   double? get latitude => _latitude;
@@ -117,8 +111,11 @@ class JournalEntry {
   List<String>? get imageURLs => _imageURLs;
   List<String>? get videoURLs => _videoURLs;
   List<String>? get tags => _tags;
-  set address(String? newAddress) => _address = newAddress;
   String? get address => _address;
+  String? get monthName => _monthName;
+  String? get localeName => _localeName;
+  String? get regionName => _regionName;
+  String? get countryName => _countryName;
 
   // Method to convert JournalEntry Map for Firestore
   Map<String, dynamic> toMap() {
@@ -134,32 +131,36 @@ class JournalEntry {
       'videoURLs': _videoURLs,
       'tags': _tags,
       'address': _address,
+      'monthName': _monthName,
+      'localeName': _localeName,
+      'regionName': _regionName,
+      'countryName': _countryName,
     };
   }
 
   // Factory constructor to create a JournalEntry from a Map (e.g., from Firestore)
   factory JournalEntry.fromMap(Map<String, dynamic>? map) {
     if (map == null) {
-      return JournalEntry.newEntry(userID: ''); // Handle null map
+      return JournalEntry.newEntry(userID: '');
     }
-
     return JournalEntry(
-      entryID: map['entryID'], // Map value for entryID
-      userID: map['userID'], // Map value for userID
+      entryID: map['entryID'],
+      userID: map['userID'],
       timestamp: map['timestamp'] != null
           ? DateTime.parse(map['timestamp'])
-          : null, // Parse timestamp if present
-      latitude: map['latitude'], // Map value for latitude
-      longitude: map['longitude'], // Map value for longitude
-      title: map['title'], // Map value for title
-      description: map['description'], // Map value for description
-      imageURLs: List<String>.from(map['imageURLs'] ??
-          []), // Convert imageURLs to a list and handle null
-      videoURLs: List<String>.from(map['videoURLs'] ??
-          []), // Convert videoURLs to a list and handle null
-      tags: List<String>.from(
-          map['tags'] ?? []), // Convert tags to a list and handle null
-        address: map['address'] as String?,
+          : null,
+      latitude: map['latitude'],
+      longitude: map['longitude'],
+      title: map['title'],
+      description: map['description'],
+      imageURLs: List<String>.from(map['imageURLs'] ?? []),
+      videoURLs: List<String>.from(map['videoURLs'] ?? []),
+      tags: List<String>.from(map['tags'] ?? []),
+      address: map['address'] as String?,
+      monthName: map['monthName'] as String?,
+      localeName: map['localeName'] as String?,
+      regionName: map['regionName'] as String?,
+      countryName: map['countryName'] as String?,
     );
   }
 
@@ -177,9 +178,15 @@ class JournalEntry {
         'imageURLs: $_imageURLs, '
         'videoURLs: $_videoURLs, '
         'tags: $_tags, '
-        'address: $_address'
+        'address: $_address, '
+        'monthName: $_monthName, '
+        'localeName: $_localeName, '
+        'regionName: $_regionName, '
+        'countryName: $_countryName'
         '}';
   }
+
+  // CopyWith
 
   JournalEntry copyWith({
     String? entryID,
@@ -193,6 +200,10 @@ class JournalEntry {
     List<String>? videoURLs,
     List<String>? tags,
     String? address,
+    String? monthName,
+    String? localeName,
+    String? regionName,
+    String? countryName,
   }) {
     return JournalEntry(
       entryID: entryID ?? this.entryID,
@@ -206,6 +217,10 @@ class JournalEntry {
       videoURLs: videoURLs ?? this.videoURLs,
       tags: tags ?? this.tags,
       address: address ?? this.address,
+      monthName: monthName ?? _monthName,
+      localeName: localeName ?? _localeName,
+      regionName: regionName ?? _regionName,
+      countryName: countryName ?? _countryName,
     );
   }
 }

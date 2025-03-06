@@ -148,6 +148,23 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
             ),
           ),
 
+        if (entry.tags != null && entry.tags!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Tags:', style: TextStyle(fontWeight: FontWeight.bold)),
+                Wrap(
+                  spacing: 8.0,
+                  children: entry.tags!.map((tag) {
+                    return Chip(label: Text(tag));
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+
         if (entry.imageURLs != null && entry.imageURLs!.isNotEmpty)
           _buildImageSection(entry.imageURLs!),
 

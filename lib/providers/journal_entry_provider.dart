@@ -1,5 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:travellista/models/journal_entry.dart';
 
 class JournalEntryProvider extends ChangeNotifier {
@@ -34,7 +35,6 @@ class JournalEntryProvider extends ChangeNotifier {
     }
 
     _isLoading = false;
-    //notifyListeners();
     if (_entries.isNotEmpty) {
       notifyListeners();
     }
@@ -84,5 +84,7 @@ class JournalEntryProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
+
+
 
 
