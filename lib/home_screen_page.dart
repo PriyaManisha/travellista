@@ -17,7 +17,7 @@ class HomeScreenPage extends StatefulWidget {
 
 class _HomeScreenPageState extends State<HomeScreenPage> {
   bool _isSearching = false;
-  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -25,7 +25,6 @@ class _HomeScreenPageState extends State<HomeScreenPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final profileProvider = context.read<ProfileProvider>();
       final journalProvider = context.read<JournalEntryProvider>();
-
       final userID = profileProvider.profile?.userID ?? 'demoUser';
       journalProvider.fetchEntriesForUser(userID);
     });
@@ -35,28 +34,22 @@ class _HomeScreenPageState extends State<HomeScreenPage> {
   Widget build(BuildContext context) {
     final entryProvider = context.watch<JournalEntryProvider>();
 
-    // 1) Handle loading
     if (entryProvider.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    // 2) Handle no entries at all
     if (entryProvider.entries.isEmpty) {
       return _buildNoEntriesYetScaffold();
     }
 
-    // 3) Build the filtered list
-    final filteredEntries = _buildFilteredList(entryProvider.entries, _searchController.text);
+    final filteredEntries = _buildFilteredList(entryProvider.entries, _searchQuery);
 
-    // 4) If user is searching but found 0 matches
     if (filteredEntries.isEmpty && _isSearching) {
       return _buildNoResultsScaffold();
     }
 
-    // 5) Group & sort
     final sortedGroups = _groupAndSortEntries(filteredEntries);
 
-    // 6) Build the normal page
     return _buildMainScaffold(sortedGroups);
   }
 
@@ -76,25 +69,30 @@ class _HomeScreenPageState extends State<HomeScreenPage> {
 
   Widget _buildNoResultsScaffold() {
     return SharedScaffold(
-      titleWidget: _buildSearchField(),
-      actions: [_buildSearchIcon()],
-      selectedIndex: 0,
-      body: const Center(
-        child: Text('No entries match your search.'),
+      titleWidget: EntrySearchBar(
+        title: 'Travellista',
+        isSearching: _isSearching,
+        onSearchChanged: (val) => setState(() => _searchQuery = val),
+        onSearchToggled: (val) => setState(() => _isSearching = val),
       ),
+      selectedIndex: 0,
+      body: const Center(child: Text('No entries match your search.')),
     );
   }
 
   Widget _buildMainScaffold(List<MapEntry<String, List<JournalEntry>>> sortedGroups) {
     return SharedScaffold(
-      titleWidget: _isSearching ? _buildSearchField() : const Text('Travellista'),
-      actions: [_buildSearchIcon()],
+      titleWidget: EntrySearchBar(
+        title: 'Travellista',
+        isSearching: _isSearching,
+        onSearchChanged: (val) => setState(() => _searchQuery = val),
+        onSearchToggled: (val) => setState(() => _isSearching = val),
+      ),
       selectedIndex: 0,
       body: ListView(
         children: sortedGroups.map((group) {
-          final locationKey = group.key; // e.g. "State, Country"
+          final locationKey = group.key;
           final entriesForGroup = group.value;
-
           return ExpansionTile(
             key: UniqueKey(),
             title: Text(locationKey),
@@ -111,32 +109,6 @@ class _HomeScreenPageState extends State<HomeScreenPage> {
     );
   }
 
-  TextField _buildSearchField() {
-    return TextField(
-      controller: _searchController,
-      autofocus: true,
-      decoration: const InputDecoration(
-        hintText: 'Search...',
-        border: InputBorder.none,
-      ),
-      onChanged: (_) => setState(() {}), // triggers rebuild for filtering
-    );
-  }
-
-  IconButton _buildSearchIcon() {
-    return IconButton(
-      icon: Icon(_isSearching ? Icons.close : Icons.search),
-      onPressed: () {
-        setState(() {
-          if (_isSearching) {
-            _searchController.clear();
-          }
-          _isSearching = !_isSearching;
-        });
-      },
-    );
-  }
-
   // ------------------------------------------
   //     LOGIC FOR FILTERING / GROUPING
   // ------------------------------------------
@@ -148,7 +120,6 @@ class _HomeScreenPageState extends State<HomeScreenPage> {
     final lowerQuery = query.toLowerCase();
 
     return allEntries.where((entry) {
-      // Combine title, address, and tags for text matching
       final combinedText = (
           (entry.title ?? '') +
               (entry.address ?? '') +
@@ -173,29 +144,24 @@ class _HomeScreenPageState extends State<HomeScreenPage> {
 
   List<MapEntry<String, List<JournalEntry>>> _groupAndSortEntries(List<JournalEntry> entries) {
     final groupedMap = <String, List<JournalEntry>>{};
-
     for (final e in entries) {
       final key = computeGroupKey(e);
       groupedMap.putIfAbsent(key, () => []).add(e);
     }
-
-    // Sort the groups by number of items desc
     final sortedGroups = groupedMap.entries.toList()
       ..sort((a, b) => b.value.length.compareTo(a.value.length));
-
     return sortedGroups;
   }
 }
 
 // -----------------------------------------------------------
-//   HELPER STRUCTS/FUNCTIONS FOR PARSED LOCATION
+//   HELPER FUNCTIONS FOR PARSED LOCATION
 // -----------------------------------------------------------
 
 // Group by state, country for now
 String computeGroupKey(JournalEntry entry) {
   final parsed = parseAddress(entry.address);
 
-  // If you want to group by region + country:
   if (parsed.region != null && parsed.country != null) {
     return '${parsed.region}, ${parsed.country}';
   } else if (parsed.country != null) {

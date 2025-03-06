@@ -28,7 +28,6 @@ class _EntrySearchBarState extends State<EntrySearchBar> {
     super.dispose();
   }
 
-  // Builds the text field shown when searching.
   Widget _buildSearchField() {
     return TextField(
       controller: _searchController,
@@ -53,8 +52,6 @@ class _EntrySearchBarState extends State<EntrySearchBar> {
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ),
-
-        // The icon button toggles the search on/off
         IconButton(
           icon: Icon(widget.isSearching ? Icons.close : Icons.search),
           onPressed: () {

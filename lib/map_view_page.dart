@@ -75,9 +75,8 @@ class _MapViewPageState extends State<MapViewPage> {
       );
     }
 
-    // 5) Return your SharedScaffold with the new search widget
+    // Return SharedScaffold with search widget
     return SharedScaffold(
-      // Instead of title: 'Map View', use the new search bar
       titleWidget: EntrySearchBar(
         title: 'Map View',
         isSearching: _isSearching,
