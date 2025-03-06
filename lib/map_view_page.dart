@@ -30,7 +30,7 @@ class _MapViewPageState extends State<MapViewPage> {
 
     if (entryProvider.isLoading) {
       return const SharedScaffold(
-        title: 'Map View', // or remove if you want to use the search bar
+        title: 'Map View',
         selectedIndex: 2,
         body: Center(child: CircularProgressIndicator()),
       );
@@ -102,7 +102,6 @@ class _MapViewPageState extends State<MapViewPage> {
         onMapCreated: (controller) async {
           _mapController.complete(controller);
 
-          // Once the map is created, fit to bounds if we have them
           if (_overallBounds != null) {
             await Future.delayed(const Duration(milliseconds: 200));
             controller.animateCamera(
@@ -114,7 +113,6 @@ class _MapViewPageState extends State<MapViewPage> {
     );
   }
 
-  // Same filter logic as in home_screen_page
   List<JournalEntry> _buildFilteredList(List<JournalEntry> allEntries, String query) {
     if (!_isSearching || query.trim().isEmpty) {
       return allEntries;
@@ -125,7 +123,8 @@ class _MapViewPageState extends State<MapViewPage> {
       final combinedText = (
           (entry.title ?? '') +
               (entry.address ?? '') +
-              (entry.tags?.join(' ') ?? '')
+              (entry.tags?.join(' ') ?? '') +
+              (entry.monthName?.toLowerCase() ?? '')
       ).toLowerCase();
       return combinedText.contains(lowerQuery);
     }).toList();

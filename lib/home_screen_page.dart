@@ -6,6 +6,7 @@ import 'package:travellista/providers/journal_entry_provider.dart';
 import 'package:travellista/providers/profile_provider.dart';
 import 'package:travellista/shared_scaffold.dart';
 import 'package:travellista/entry_search.dart';
+import 'package:travellista/util/parsed_location.dart';
 
 class HomeScreenPage extends StatefulWidget {
   const HomeScreenPage({super.key});
@@ -151,17 +152,16 @@ class _HomeScreenPageState extends State<HomeScreenPage> {
       final combinedText = (
           (entry.title ?? '') +
               (entry.address ?? '') +
-              (entry.tags?.join(' ') ?? '')
+              (entry.tags?.join(' ') ?? '') +
+              (entry.monthName?.toLowerCase() ?? '')
       ).toLowerCase();
 
-      // Optional: also match partial year, month, day
       final date = entry.timestamp;
       bool dateMatch = false;
       if (date != null) {
         final yearStr = date.year.toString();
         final monthStr = date.month.toString().padLeft(2, '0');
         final dayStr = date.day.toString().padLeft(2, '0');
-        // If user typed "2023" or "05" or "12" etc.
         dateMatch = yearStr.contains(lowerQuery)
             || monthStr.contains(lowerQuery)
             || dayStr.contains(lowerQuery);
@@ -170,56 +170,6 @@ class _HomeScreenPageState extends State<HomeScreenPage> {
       return combinedText.contains(lowerQuery) || dateMatch;
     }).toList();
   }
-
-//   String preprocessQuery(String query) {
-//     // If the user typed exactly a dictionary key, replace it
-//     // Or you can split by spaces and replace each token.
-//     final lower = query.toLowerCase();
-//
-//     // For a direct match:
-//     if (synonyms.containsKey(lower)) {
-//       return synonyms[lower]!;
-//     }
-//
-//     // For partial or more advanced matching, you can do fuzzy checks, etc.
-//     return query;
-//   }
-//
-//   List<JournalEntry> _buildFilteredList(List<JournalEntry> allEntries, String query) {
-//     if (!_isSearching || query.trim().isEmpty) {
-//       return allEntries;
-//     }
-//
-//     final processedQuery = preprocessQuery(query);
-//     final lowerQuery = processedQuery.toLowerCase();
-//
-//     return allEntries.where((entry) {
-//       // Same logic as before...
-//       final combinedText = (
-//           (entry.title ?? '') + (entry.address ?? '') + (entry.tags?.join(' ') ?? '')
-//       ).toLowerCase();
-//
-//       // Optional date checking:
-//       final date = entry.timestamp;
-//       bool dateMatch = false;
-//       if (date != null) {
-//         final yearStr = date.year.toString();      // "2023"
-//         final monthNum = date.month.toString();    // "2"
-//         final month2 = monthNum.padLeft(2, '0');   // "02"
-//         final dayStr = date.day.toString().padLeft(2, '0');
-//
-//         // Also map monthNum -> month names if you want:
-//         // e.g., 2 -> "february" or "feb"
-//
-//         dateMatch = yearStr.contains(lowerQuery)
-//             || monthNum.contains(lowerQuery)
-//             || month2.contains(lowerQuery)
-//             || dayStr.contains(lowerQuery);
-//       }
-//
-//       return combinedText.contains(lowerQuery) || dateMatch;
-//     }).toList();
-//   }
 
   List<MapEntry<String, List<JournalEntry>>> _groupAndSortEntries(List<JournalEntry> entries) {
     final groupedMap = <String, List<JournalEntry>>{};
@@ -238,46 +188,16 @@ class _HomeScreenPageState extends State<HomeScreenPage> {
 }
 
 // -----------------------------------------------------------
-//   HELPER STRUCTS/FUNCTIONS FOR PARSED LOCATION (below)
+//   HELPER STRUCTS/FUNCTIONS FOR PARSED LOCATION
 // -----------------------------------------------------------
-
-class ParsedLocation {
-  final String? city;
-  final String? state;
-  final String? country;
-  ParsedLocation({this.city, this.state, this.country});
-}
-
-// Parse city, state, country
-ParsedLocation parseLocation(String? address) {
-  if (address == null || address.trim().isEmpty) {
-    return ParsedLocation();
-  }
-  final parts = address.split(',').map((p) => p.trim()).toList();
-
-  String? city;
-  String? state;
-  String? country;
-
-  if (parts.length == 1) {
-    country = parts[0];
-  } else if (parts.length == 2) {
-    state = parts[0];
-    country = parts[1];
-  } else {
-    city = parts[0];
-    state = parts[1];
-    country = parts.last;
-  }
-
-  return ParsedLocation(city: city, state: state, country: country);
-}
 
 // Group by state, country for now
 String computeGroupKey(JournalEntry entry) {
-  final parsed = parseLocation(entry.address);
-  if (parsed.state != null && parsed.country != null) {
-    return '${parsed.state}, ${parsed.country}';
+  final parsed = parseAddress(entry.address);
+
+  // If you want to group by region + country:
+  if (parsed.region != null && parsed.country != null) {
+    return '${parsed.region}, ${parsed.country}';
   } else if (parsed.country != null) {
     return parsed.country!;
   } else {
