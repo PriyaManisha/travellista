@@ -1,6 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:travellista/location_picker_screen.dart';
+import 'package:travellista/util/location_service_wrapper.dart';
 
 GoRouter fakeNewEntryRouter(Widget formWidget) {
   return GoRouter(
@@ -8,7 +11,7 @@ GoRouter fakeNewEntryRouter(Widget formWidget) {
     routes: [
       GoRoute(
         path: '/',
-        builder: (ctx, state) => formWidget, // your creation form
+        builder: (ctx, state) => formWidget,
       ),
       GoRoute(
         path: '/home',
@@ -29,7 +32,6 @@ GoRouter fakeEditEntryRouter(Widget rootWidget) {
         builder: (ctx, state) => Scaffold(
           body: Center(
             child: ElevatedButton(
-              // For the test to push /edit
               onPressed: () {
                 ctx.push('/edit');
               },
@@ -69,3 +71,38 @@ GoRouter fakeDetailRouter(Widget detailWidget) {
     ],
   );
 }
+
+GoRouter fakeLocationPickerRouter({
+  required Widget rootScreen,    
+  required ILocationService service,
+}) {
+  return GoRouter(
+    initialLocation: '/',
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (context, state) => rootScreen,
+        routes: [
+          GoRoute(
+            path: 'location-picker',
+            name: 'locationPicker',
+            builder: (ctx, st) {
+              final extras = st.extra as Map<String, dynamic>? ?? {};
+              final latLng = extras['initialLocation'] as LatLng?
+                  ?? const LatLng(47.60621, -122.33207);
+              final addr = extras['initialAddress'] as String?
+                  ?? 'Seattle, Washington, United States';
+
+              return LocationPickerScreen(
+                initialLocation: latLng,
+                initialAddress: addr,
+                locationService: service,
+              );
+            },
+          ),
+        ],
+      ),
+    ],
+  );
+}
+

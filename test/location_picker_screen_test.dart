@@ -5,6 +5,9 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:travellista/location_picker_screen.dart';
 import 'package:travellista/util/location_service_wrapper.dart';
+import 'package:travellista/util/parsed_location.dart';
+import 'fakes/fake_routers.dart';
+import 'fakes/fake_root_location_capturing_screen.dart';
 
 import 'location_picker_screen_test.mocks.dart';
 
@@ -18,111 +21,96 @@ void main() {
     });
 
     testWidgets('Displays the initial address in the UI', (tester) async {
-      // ARRANGE: Mock the service to return a mocked address
+      // setup / arrange / given : mock data and service, fake router, fake root screen
       when(mockService.reverseGeocode(any, any))
-          .thenAnswer((_) async => 'Mocked Address');
-
-      // ACT: Put the widget on the virtual screen
-      await tester.pumpWidget(
-        MaterialApp(
-          home: LocationPickerScreen(
-            initialLocation: const LatLng(47.60621, -122.33207),
-            initialAddress: 'Seattle, WA, United States',
-            locationService: mockService,
-          ),
+          .thenAnswer((_) async => const ParsedLocation(
+        formattedAddress: 'Mocked Address',
+      ));
+      final router = fakeLocationPickerRouter(
+        rootScreen: LocationPickerScreen(
+          initialLocation: const LatLng(47.60621, -122.33207),
+          initialAddress: 'Seattle, WA, United States',
+          locationService: mockService,
         ),
+        service: mockService,
       );
 
+      // ACT : put the widget on the screen
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
       await tester.pump();
 
-      // ASSERT: Check the address is shown
+      // ASSERT: 'Seattle, WA, United States' is shown
       expect(find.text('Seattle, WA, United States'), findsOneWidget);
     });
 
-    testWidgets('Tapping check icon pops with current lat/long and address', (tester) async {
-      // ARRANGE: Mock the service to return a mocked address
-      when(mockService.reverseGeocode(any, any))
-          .thenAnswer((_) async => 'Mocked Address');
-
-      late PickedLocationResult? result;
-
-      // ACT: Put the widget on the virtual screen
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Builder(builder: (context) {
-            return ElevatedButton(
-              onPressed: () async {
-                result = await Navigator.push<PickedLocationResult>(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => LocationPickerScreen(
-                      initialLocation: const LatLng(47.60621, -122.33207),
-                      initialAddress: 'Seattle, WA, United States',
-                      locationService: mockService,
-                    ),
-                  ),
-                );
-              },
-              child: const Text('Go to Picker'),
-            );
-          }),
-        ),
+    testWidgets('Tapping check icon returns a PickedLocationResult', (tester) async {
+      // setup / arrange / given : mock data and service, fake router, fake root screen
+      when(mockService.reverseGeocode(any, any)).thenAnswer((_) async =>
+      const ParsedLocation(
+        formattedAddress: 'Mocked Address',
+      ),
+      );
+      final router = fakeLocationPickerRouter(
+        rootScreen: RootLocationCapturingScreen(),
+        service: mockService,
       );
 
-      // Tap to navigate
+      // ACT : put the widget on the screen
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpAndSettle();
+
+      // ACT : tap "Go to Picker"
       await tester.tap(find.text('Go to Picker'));
       await tester.pumpAndSettle();
 
-      // ACT : Tap the check icon to pop
+      // Act tap map at a given long/latitude
+      final mapFinder = find.byType(GoogleMap);
+      final mapWidget = tester.widget<GoogleMap>(mapFinder);
+      mapWidget.onTap?.call(const LatLng(47.60621, -122.33207));
+      await tester.pumpAndSettle();
+
+      // ACT : Tap check icon in the location picker
       await tester.tap(find.byIcon(Icons.check));
       await tester.pumpAndSettle();
 
-      // ASSERT : The screen popped with a PickedLocationResult
-      expect(result, isNotNull);
-      // The lat/lng should match initial location
-      expect(result!.latLng, const LatLng(47.60621, -122.33207));
-      expect(result!.address, 'Seattle, WA, United States');
+      // ASSERT / VERIFY : RootTestScreen's setState has updated:
+      expect(find.text('Mocked Address'), findsOneWidget, reason: 'FAB shows the picked address');
     });
 
-
     testWidgets('Map onTap triggers reverseGeocode and updates the address', (tester) async {
-      // setup/given/arrange : mock service
-      when(mockService.reverseGeocode(40.0, -74.0))
-          .thenAnswer((_) async => 'Mocked New Address');
-
-      // ACT: Put the widget on the virtual screen
-      await tester.pumpWidget(
-        MaterialApp(
-          home: LocationPickerScreen(
-            initialLocation: const LatLng(47.60621, -122.33207),
-            initialAddress: 'Old Address',
-            locationService: mockService,
-          ),
-        ),
+      // setup / arrange / given : mock data and service, fake router
+      when(mockService.reverseGeocode(40.0, -74.0)).thenAnswer((_) async =>
+      const ParsedLocation(
+        formattedAddress: 'Mocked New Address',
+      ),
       );
-      await tester.pump();
+      final router = fakeLocationPickerRouter(
+        rootScreen: LocationPickerScreen(
+          initialLocation: const LatLng(47.60621, -122.33207),
+          initialAddress: 'Seattle, WA, United States',
+          locationService: mockService,
+        ),
+        service: mockService,
+      );
 
-      // ASSERT : old address is visible initially
-      expect(find.text('Old Address'), findsOneWidget);
-
-      // ACT: Simulate tapping on the map by calling the GoogleMap's onTap
-      final googleMapFinder = find.byType(GoogleMap);
-      expect(googleMapFinder, findsOneWidget);
-
-      final googleMapWidget = tester.widget<GoogleMap>(googleMapFinder);
-      // ASSERT : onTap is the callback used when the map is tapped
-      final onTapCallback = googleMapWidget.onTap;
-      expect(onTapCallback, isNotNull);
-
-      // ACT : Call the callback with a new location
-      onTapCallback?.call(const LatLng(40.0, -74.0));
-
-      // ACT " Let the future complete
+      // ACT : put the widget on the screen
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
       await tester.pumpAndSettle();
 
-      // ASSERT: The address changed to 'Mocked New Address'
+      // ASSERT : 'Seattle, WA, United States' is shown
+      expect(find.text('Seattle, WA, United States'), findsOneWidget);
+
+      // ACT : Find the GoogleMap widget
+      final googleMapFinder = find.byType(GoogleMap);
+      final googleMapWidget = tester.widget<GoogleMap>(googleMapFinder);
+
+      // ACT : Simulate user tapping new location
+      googleMapWidget.onTap?.call(const LatLng(40.0, -74.0));
+
+      await tester.pumpAndSettle();
+
+      // ASSERT / VERIFY : Confirm new address
       expect(find.text('Mocked New Address'), findsOneWidget);
-      // VERIFY : Also confirm mock was called
       verify(mockService.reverseGeocode(40.0, -74.0)).called(1);
     });
   });
