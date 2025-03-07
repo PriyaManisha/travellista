@@ -105,5 +105,60 @@ void main() {
           expect(markerPositions, contains(const LatLng(47.6062, -122.3321)));
           expect(markerPositions, contains(const LatLng(34.0522, -118.2437)));
         });
+    testWidgets('Search filters out non-matching entries in MapViewPage', (WidgetTester tester) async {
+      // setup/given/arrange : mock provider and journal data
+      when(mockProvider.isLoading).thenReturn(false);
+
+      final entry1 = JournalEntry(
+        entryID: '1',
+        userID: 'userA',
+        title: 'Beach Trip',
+        address: 'CA, USA',
+        latitude: 34.0,
+        longitude: -118.0,
+        tags: ['beach', 'fun'],
+      );
+      final entry2 = JournalEntry(
+        entryID: '2',
+        userID: 'userB',
+        title: 'Mountain Adventure',
+        address: 'CO, USA',
+        latitude: 39.0,
+        longitude: -105.0,
+        tags: ['hiking'],
+      );
+
+      when(mockProvider.entries).thenReturn([entry1, entry2]);
+
+      // ACT: Display the widget on the virtual screen
+      await tester.pumpWidget(createMapViewPageUnderTest());
+      await tester.pumpAndSettle();
+
+      // ASSERT : we see 2 markers
+      final googleMapWidget = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      expect(googleMapWidget.markers.length, 2);
+
+      // ACT: Toggle the search bar by tapping the search icon
+      final searchIcon = find.byIcon(Icons.search);
+      expect(searchIcon, findsOneWidget);
+      await tester.tap(searchIcon);
+      await tester.pumpAndSettle();
+
+      // EXPECT : TextField for search should appear
+      final searchField = find.byType(TextField);
+      expect(searchField, findsOneWidget);
+
+      // ACT: type "beach" into the search field
+      await tester.enterText(searchField, 'beach');
+      await tester.pumpAndSettle();
+
+      // ASSERT : only the "beach" tag entry should show up
+      final updatedMapWidget = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      expect(updatedMapWidget.markers.length, 1);
+
+      // ASSERT : last marker should be for entry1 (lat=34.0, lon=-118.0)
+      final theMarker = updatedMapWidget.markers.first;
+      expect(theMarker.position, const LatLng(34.0, -118.0));
+    });
   });
 }
