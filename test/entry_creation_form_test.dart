@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:travellista/entry_creation_form.dart';
 import 'package:mockito/annotations.dart';
@@ -9,8 +10,10 @@ import 'package:travellista/util/storage_service.dart';
 import 'package:travellista/models/journal_entry.dart';
 import 'package:travellista/providers/journal_entry_provider.dart';
 import 'package:travellista/providers/profile_provider.dart';
+import 'package:travellista/router/app_router.dart';
 
 import 'entry_creation_form_test.mocks.dart';
+import 'fakes/fake_routers.dart';
 
 @GenerateMocks([
   JournalEntryProvider,
@@ -40,8 +43,7 @@ main() {
       when(mockStorage.uploadFile(any, any))
           .thenAnswer((_) async => 'https://fake.com/uploaded_img.png');
 
-      // 1. Put widget on the virtual screen
-      await tester.pumpWidget(
+      final router = fakeNewEntryRouter(
         MultiProvider(
           providers: [
             ChangeNotifierProvider<ProfileProvider>.value(value: mockProfileProvider),
@@ -57,6 +59,11 @@ main() {
           ),
         ),
       );
+
+      // 1. Put widget on the virtual screen
+      await tester.pumpWidget(MaterialApp.router(
+        routerConfig: router,
+      ));
 
       // ACT - Fill text fields
       final titleField = find.widgetWithText(TextFormField, 'Title');
@@ -85,7 +92,7 @@ main() {
 
   group('EntryCreationForm - Edit Entry Tests', () {
     testWidgets('Updates an existing entry with correct parameters', (WidgetTester tester) async {
-      // setup / given / arrange : mock provider and storage service
+      // Setup: Mock provider and storage service
       final mockJournalProvider = MockJournalEntryProvider();
       final mockProfileProvider = MockProfileProvider();
       final mockStorage = MockStorageService();
@@ -113,42 +120,48 @@ main() {
         longitude: -122.4194,
       );
 
-      // ACT - Put widget on the virtual screen
-      await tester.pumpWidget(
-        MultiProvider(
-          providers: [
-            ChangeNotifierProvider<ProfileProvider>.value(value: mockProfileProvider),
-            ChangeNotifierProvider<JournalEntryProvider>.value(value: mockJournalProvider),
-            Provider<StorageService>.value(value: mockStorage),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: EntryCreationForm(
-                existingEntry: existingEntry,
-                storageOverride: mockStorage,
-              ),
-            ),
+      final editFormWidget = MultiProvider(
+        providers: [
+          ChangeNotifierProvider<ProfileProvider>.value(value: mockProfileProvider),
+          ChangeNotifierProvider<JournalEntryProvider>.value(value: mockJournalProvider),
+          Provider<StorageService>.value(value: mockStorage),
+        ],
+        child: Scaffold(
+          body: EntryCreationForm(
+            existingEntry: existingEntry,
+            storageOverride: mockStorage,
           ),
         ),
       );
 
-      await tester.pumpAndSettle();
+      final router = fakeEditEntryRouter(editFormWidget);
 
-      // ASSERT (initial) - old fields should be present
+      // Put widget on the virtual screen
+      await tester.pumpWidget(MaterialApp.router(
+        routerConfig: router,
+      ));
+
+      // Navigate to the edit screen
+      final goToEditButton = find.text('Go to Edit Screen');
+      expect(goToEditButton, findsOneWidget); // Verify the dummy screen is loaded
+      await tester.tap(goToEditButton);
+      await tester.pumpAndSettle(); // Wait for navigation to complete
+
+      // Assert (initial): Old fields should be present
       expect(find.text('Old Title'), findsOneWidget);
       expect(find.text('Old Description'), findsOneWidget);
 
-      // ACT - Edit the title
+      // Act: Edit the title
       final titleField = find.widgetWithText(TextFormField, 'Old Title');
       await tester.enterText(titleField, 'New Title');
 
-      // ACT - tap update button
+      // Act: Tap update button
       final updateButton = find.text('Update Entry');
       await tester.ensureVisible(updateButton);
       await tester.tap(updateButton);
       await tester.pumpAndSettle();
 
-      // ASSERT (final) - updateEntry is called once and captures aruments
+      // Assert : updateEntry is called once and captures arguments
       final verification = verify(mockJournalProvider.updateEntry(captureAny, captureAny));
       verification.called(1);
 
@@ -156,12 +169,12 @@ main() {
       final updatedEntryID = capturedArgs[0] as String;
       final updatedEntryObj = capturedArgs[1] as JournalEntry;
 
-      // Confirm we updated the existing doc
+      // Assert : Confirm we updated the existing doc
       expect(updatedEntryID, 'abc123');
-      // Confirm the new title & old description
+      // Assert : Confirm the new title & old description
       expect(updatedEntryObj.title, 'New Title');
       expect(updatedEntryObj.description, 'Old Description');
-      // Check userID
+      // Assert : Check userID matches
       expect(updatedEntryObj.userID, 'demoUser');
     });
   });

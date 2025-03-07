@@ -7,6 +7,7 @@ import 'dart:async' as _i3;
 
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:travellista/util/location_service_wrapper.dart' as _i2;
+import 'package:travellista/util/parsed_location.dart' as _i4;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -31,10 +32,10 @@ class MockILocationService extends _i1.Mock implements _i2.ILocationService {
   }
 
   @override
-  _i3.Future<String?> reverseGeocode(double? lat, double? lng) =>
+  _i3.Future<_i4.ParsedLocation?> reverseGeocode(double? lat, double? lng) =>
       (super.noSuchMethod(
             Invocation.method(#reverseGeocode, [lat, lng]),
-            returnValue: _i3.Future<String?>.value(),
+            returnValue: _i3.Future<_i4.ParsedLocation?>.value(),
           )
-          as _i3.Future<String?>);
+          as _i3.Future<_i4.ParsedLocation?>);
 }
