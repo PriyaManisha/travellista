@@ -51,3 +51,21 @@ GoRouter fakeEditEntryRouter(Widget rootWidget) {
     ],
   );
 }
+
+GoRouter fakeDetailRouter(Widget detailWidget) {
+  return GoRouter(
+    initialLocation: '/',
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (ctx, state) => detailWidget,
+      ),
+      GoRoute(
+        path: '/home',
+        builder: (ctx, state) => const Scaffold(
+          body: Center(child: Text('Fake Home Screen')),
+        ),
+      ),
+    ],
+  );
+}

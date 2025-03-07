@@ -9,7 +9,7 @@ import 'package:network_image_mock/network_image_mock.dart';
 import 'package:travellista/entry_detail_page.dart';
 import 'package:travellista/models/journal_entry.dart';
 import 'package:travellista/providers/journal_entry_provider.dart';
-
+import 'fakes/fake_routers.dart';
 import 'fakes/fake_video_player.dart';
 import 'entry_detail_page_test.mocks.dart';
 
@@ -19,7 +19,6 @@ void main() {
 
   setUpAll(() {
     TestWidgetsFlutterBinding.ensureInitialized();
-    // So Chewie/video_player won't crash
     VideoPlayerPlatform.instance = FakeVideoPlayerPlatform();
   });
 
@@ -28,13 +27,17 @@ void main() {
   });
 
   Widget createTestWidget(String entryID) {
-    return MultiProvider(
+    final detailPage = MultiProvider(
       providers: [
         ChangeNotifierProvider<JournalEntryProvider>.value(value: mockProvider),
       ],
-      child: MaterialApp(
-        home: EntryDetailPage(entryID: entryID),
-      ),
+      child: EntryDetailPage(entryID: entryID),
+    );
+
+    final router = fakeDetailRouter(detailPage);
+
+    return MaterialApp.router(
+      routerConfig: router,
     );
   }
 
@@ -50,6 +53,7 @@ void main() {
       address: 'San Francisco, CA, USA',
       imageURLs: ['http://example.com/image1.jpg'],
       videoURLs: ['http://example.com/video1.mp4'],
+      tags: ['tag1', 'tag2'],
     );
 
     testWidgets('Displays entry details (title, description, date, etc.)',
@@ -73,6 +77,10 @@ void main() {
             DateFormat('MM/dd/yyyy').format(sampleEntry.timestamp!);
             expect(find.textContaining(formattedDate), findsOneWidget);
             expect(find.textContaining('San Francisco, CA, USA'), findsOneWidget);
+            expect(find.text('Tags:'), findsOneWidget);
+            expect(find.text('tag1'), findsOneWidget);
+            expect(find.text('tag2'), findsOneWidget);
+
 
             expect(find.text('Images:'), findsOneWidget);
             expect(find.text('Videos:'), findsOneWidget);
@@ -101,13 +109,13 @@ void main() {
             expect(find.text('Cancel'), findsOneWidget);
             expect(find.text('Delete'), findsOneWidget);
 
-            // Tap "Cancel"
+            // ACT - Tap "Cancel"
             await tester.tap(find.text('Cancel'));
             await tester.pumpAndSettle();
 
-            // Dialog closed
+            // ASSERT - Dialog closed
             expect(find.text('Are you sure you want to delete this entry?'), findsNothing);
-            // No delete call
+            // VERIFY - No delete call
             verifyNever(mockProvider.deleteEntry(any));
           });
         });
