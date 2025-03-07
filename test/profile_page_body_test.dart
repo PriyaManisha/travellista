@@ -10,6 +10,7 @@ import 'package:travellista/models/profile.dart';
 import 'package:travellista/profile_page_body.dart';
 import 'package:travellista/util/storage_service.dart';
 import 'package:travellista/util/theme_manager.dart';
+import 'fakes/fake_routers.dart';
 
 import 'profile_page_body_test.mocks.dart';
 
@@ -21,16 +22,23 @@ void main() {
     late MockStorageService mockStorageService;
 
     Widget createWidgetUnderTest() {
-      return MultiProvider(
+      // 1. Create MultiProvider
+      final profileWidget = MultiProvider(
         providers: [
           ChangeNotifierProvider<ProfileProvider>.value(value: mockProfileProvider),
           Provider<StorageService>.value(value: mockStorageService),
         ],
-        child: MaterialApp(
-          home: Scaffold(
-            body: ProfilePageBody(storageOverride: mockStorageService),
-          ),
+        child: Scaffold(
+          body: ProfilePageBody(storageOverride: mockStorageService),
         ),
+      );
+
+      // 2. Build fake router
+      final router = fakeProfileRouter(profileWidget);
+
+      // 3. Return MaterialApp.router
+      return MaterialApp.router(
+        routerConfig: router,
       );
     }
 

@@ -5,6 +5,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:travellista/location_picker_screen.dart';
 import 'package:travellista/util/location_service_wrapper.dart';
 
+/// Fake router for new entry screen / nav
 GoRouter fakeNewEntryRouter(Widget formWidget) {
   return GoRouter(
     initialLocation: '/',
@@ -23,6 +24,7 @@ GoRouter fakeNewEntryRouter(Widget formWidget) {
   );
 }
 
+/// Fake router for edit screen / nav
 GoRouter fakeEditEntryRouter(Widget rootWidget) {
   return GoRouter(
     initialLocation: '/dummy',
@@ -54,6 +56,7 @@ GoRouter fakeEditEntryRouter(Widget rootWidget) {
   );
 }
 
+/// Fake router for detail screen
 GoRouter fakeDetailRouter(Widget detailWidget) {
   return GoRouter(
     initialLocation: '/',
@@ -72,8 +75,9 @@ GoRouter fakeDetailRouter(Widget detailWidget) {
   );
 }
 
+/// Fake router for location picker screen
 GoRouter fakeLocationPickerRouter({
-  required Widget rootScreen,    
+  required Widget rootScreen,
   required ILocationService service,
 }) {
   return GoRouter(
@@ -106,3 +110,21 @@ GoRouter fakeLocationPickerRouter({
   );
 }
 
+/// Fake router for profile screen
+GoRouter fakeProfileRouter(Widget profileWidget) {
+  return GoRouter(
+    initialLocation: '/',
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (ctx, state) => profileWidget,
+      ),
+      GoRoute(
+        path: '/home',
+        builder: (ctx, state) => const Scaffold(
+          body: Center(child: Text('Fake Home Screen')),
+        ),
+      ),
+    ],
+  );
+}
