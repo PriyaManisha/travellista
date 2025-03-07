@@ -24,7 +24,7 @@ import 'fakes/fake_routers.dart';
 main() {
   group('EntryCreationForm - New Entry Tests', () {
     testWidgets('Creates a new entry with correct parameters from user input', (tester) async {
-        // setup / given / arrange : mock provider and storage service
+      // setup / given / arrange : mock provider and storage service
       final mockJournalProvider = MockJournalEntryProvider();
       final mockProfileProvider = MockProfileProvider();
       final mockStorage = MockStorageService();
@@ -72,6 +72,10 @@ main() {
       final descriptionField = find.widgetWithText(TextFormField, 'Description');
       await tester.enterText(descriptionField, 'A quick description');
 
+      final tagField = find.widgetWithText(TextFormField, 'e.g. beach, hiking, summer');
+      await tester.enterText(tagField, 'beach, hiking, summer');
+
+
       // ACT - Tap save button
       final saveButton = find.text('Save Entry');
       await tester.ensureVisible(saveButton);
@@ -87,6 +91,7 @@ main() {
       expect(newEntry.title, 'My New Title');
       expect(newEntry.description, 'A quick description');
       expect(newEntry.userID, 'demoUser');
+      expect(newEntry.tags, containsAll(['beach', 'hiking', 'summer']));
     });
   });
 
@@ -143,9 +148,9 @@ main() {
 
       // Navigate to the edit screen
       final goToEditButton = find.text('Go to Edit Screen');
-      expect(goToEditButton, findsOneWidget); // Verify the dummy screen is loaded
+      expect(goToEditButton, findsOneWidget);
       await tester.tap(goToEditButton);
-      await tester.pumpAndSettle(); // Wait for navigation to complete
+      await tester.pumpAndSettle();
 
       // Assert (initial): Old fields should be present
       expect(find.text('Old Title'), findsOneWidget);
@@ -171,10 +176,8 @@ main() {
 
       // Assert : Confirm we updated the existing doc
       expect(updatedEntryID, 'abc123');
-      // Assert : Confirm the new title & old description
       expect(updatedEntryObj.title, 'New Title');
       expect(updatedEntryObj.description, 'Old Description');
-      // Assert : Check userID matches
       expect(updatedEntryObj.userID, 'demoUser');
     });
   });
