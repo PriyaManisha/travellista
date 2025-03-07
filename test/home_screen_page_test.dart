@@ -66,7 +66,7 @@ void main() {
     });
 
     testWidgets('Shows expansion tiles and entries when not loading and entries is not empty', (WidgetTester tester) async {
-      // setup / given / arrange : mock providers
+      // setup / given / arrange : mock providers, mock data
       when(mockProfileProvider.isLoading).thenReturn(false);
       when(mockProfileProvider.profile).thenReturn(null);
       when(mockJournalProvider.isLoading).thenReturn(false);
@@ -100,6 +100,99 @@ void main() {
       expect(find.byType(EntryCard), findsOneWidget);
       expect(find.text('Title 1'), findsOneWidget);
       await tester.pumpAndSettle();
+    });
+
+    testWidgets('Displays tags on EntryCard when entry has tags', (WidgetTester tester) async {
+      // setup / given / arrange : mock providers, mock data
+      when(mockProfileProvider.isLoading).thenReturn(false);
+      when(mockProfileProvider.profile).thenReturn(null);
+      when(mockJournalProvider.isLoading).thenReturn(false);
+
+      final entryWithTags = JournalEntry(
+        entryID: '2',
+        userID: 'userA',
+        title: 'Title with Tags',
+        address: 'FL, United States',
+        timestamp: DateTime(2023, 2, 2),
+        tags: ['beach', 'summer'],
+      );
+
+      when(mockJournalProvider.entries).thenReturn([entryWithTags]);
+
+      // ACT - display widget to virtual screen
+      await tester.pumpWidget(createHomeScreenUnderTest());
+      await tester.pumpAndSettle();
+
+      // Open the expansion tile for "FL, United States"
+      await tester.tap(find.text('FL, United States'));
+      await tester.pumpAndSettle();
+
+      // ASSERT : We should see an EntryCard with 'Title with Tags'
+      expect(find.text('Title with Tags'), findsOneWidget);
+
+      // Assert : The two Chip labels: 'beach' and 'summer'
+      expect(find.text('beach'), findsOneWidget);
+      expect(find.text('summer'), findsOneWidget);
+    });
+
+    testWidgets('Search functionality filters out non-matching entries', (WidgetTester tester) async {
+      // setup / given / arrange : mock providers, mock data
+      when(mockProfileProvider.isLoading).thenReturn(false);
+      when(mockProfileProvider.profile).thenReturn(null);
+      when(mockJournalProvider.isLoading).thenReturn(false);
+
+      final beachEntry = JournalEntry(
+        entryID: '1',
+        userID: 'userA',
+        title: 'Beach Day',
+        address: 'CA, United States',
+        timestamp: DateTime(2023, 2, 2),
+        tags: ['beach'],
+      );
+      final mountainEntry = JournalEntry(
+        entryID: '2',
+        userID: 'userA',
+        title: 'Mountain Hike',
+        address: 'CO, United States',
+        timestamp: DateTime(2023, 5, 5),
+        tags: ['hiking'],
+      );
+
+      when(mockJournalProvider.entries).thenReturn([beachEntry, mountainEntry]);
+
+      // ACT - display widget to virtual screen
+      await tester.pumpWidget(createHomeScreenUnderTest());
+      await tester.pumpAndSettle();
+
+      // ASSERT : We should see two entry groupings
+      expect(find.text('CA, United States'), findsOneWidget);
+      expect(find.text('CO, United States'), findsOneWidget);
+
+      // ACT - find the search icon
+      final searchIcon = find.byIcon(Icons.search);
+      expect(searchIcon, findsOneWidget);
+      await tester.tap(searchIcon);
+      await tester.pumpAndSettle();
+
+      // ACT : find the search field
+      final searchField = find.byType(TextField);
+      expect(searchField, findsOneWidget);
+
+      // ACT : enter a search query
+      await tester.enterText(searchField, 'beach');
+      await tester.pumpAndSettle();
+
+      // ASSERT: Only the "beachEntry" should remain
+      expect(find.text('CA, United States'), findsOneWidget);
+      expect(find.text('CO, United States'), findsNothing);
+
+      // ACT  : expand the tile to see the card
+      await tester.tap(find.text('CA, United States'));
+      await tester.pumpAndSettle();
+
+      // ASSERT : We should see the 'beachEntry' tag card, but not 'mountainHike'
+      expect(find.text('Beach Day'), findsOneWidget);
+      expect(find.text('Mountain Hike'), findsNothing);
     });
   });
 }
