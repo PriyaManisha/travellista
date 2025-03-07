@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:travellista/home_screen_page.dart';
 import 'package:travellista/util/theme_manager.dart';
 import 'package:travellista/providers/journal_entry_provider.dart';
 import 'package:travellista/providers/profile_provider.dart';
 import 'package:travellista/firebase_options.dart';
-import 'package:travellista/entry_creation_form.dart';
-import 'package:travellista/map_view_page.dart';
-import 'package:travellista/profile_page.dart';
+import 'package:travellista/router/app_router.dart';
 
 Future<void> main() async {
   // Initialize Firebase
@@ -33,7 +30,7 @@ class MyApp extends StatelessWidget {
       child: ValueListenableBuilder<ThemeMode>(
         valueListenable: ThemeManager.themeNotifier,
         builder: (_, ThemeMode currentTheme, __) {
-          return MaterialApp(
+          return MaterialApp.router(
             title: 'Travellista',
             theme: ThemeData(
               colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
@@ -41,13 +38,7 @@ class MyApp extends StatelessWidget {
             ),
             darkTheme: ThemeData.dark(),
             themeMode: currentTheme,
-            routes:{
-              "/home": (context) => const HomeScreenPage(),
-              "/add": (context) => const EntryCreationForm(),
-              "/map": (context) => const MapViewPage(),
-              "/profile": (context) => const ProfilePage()
-            },
-            initialRoute:"/home",
+            routerConfig: appRouter,
           );
         },
       ),

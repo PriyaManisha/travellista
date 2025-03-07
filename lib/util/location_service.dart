@@ -32,7 +32,6 @@ class LocationService {
               final shortName = comp['short_name'] as String?;
 
               if (types.contains('locality')) {
-                // e.g. "Seattle"
                 locale = longName;
               } else if (types.contains('administrative_area_level_2') &&
                   locale == null) {
@@ -45,7 +44,6 @@ class LocationService {
               }
             }
 
-            // Grab Google's 'formatted_address'
             final formattedAddress = firstResult['formatted_address'] as String;
 
             return ParsedLocation(
@@ -58,7 +56,7 @@ class LocationService {
           }
         }
       }
-      return null; // No results or not 'OK'
+      return null;
     } catch (e) {
       print('Reverse geocoding error: $e');
       return null;

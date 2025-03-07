@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:travellista/models/journal_entry.dart';
 import 'package:travellista/providers/journal_entry_provider.dart';
 import 'package:travellista/shared_scaffold.dart';
-import 'package:travellista/entry_detail_page.dart';
 import 'package:travellista/entry_search.dart';
 
 class MapViewPage extends StatefulWidget {
@@ -19,7 +19,7 @@ class MapViewPage extends StatefulWidget {
 class _MapViewPageState extends State<MapViewPage> {
   final Completer<GoogleMapController> _mapController = Completer();
   LatLngBounds? _overallBounds;
-
+  String entryDetailPath = '/entry/';
   bool _isSearching = false;
   String _searchQuery = '';
 
@@ -188,13 +188,9 @@ class _MapViewPageState extends State<MapViewPage> {
               title: Text(e.title ?? 'Untitled'),
               subtitle: Text('${e.address}'),
               onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => EntryDetailPage(entryID: e.entryID!),
-                  ),
-                );
+                context.pop();
+                final entryID = e.entryID;
+                context.push('$entryDetailPath$entryID');
               },
             );
           },

@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_places_autocomplete/google_places_autocomplete.dart';
 import 'package:travellista/util/location_service_wrapper.dart';
-import 'package:travellista/util/parsed_location.dart';
 
 class LocationPickerScreen extends StatefulWidget {
   final LatLng initialLocation;
@@ -195,8 +195,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   // Private Logic
   // ------------------------------------
   void _onCheckPressed() {
-    Navigator.pop(
-      context,
+    context.pop(
       PickedLocationResult(
         latLng: _pickedLocation,
         address: _pickedAddress,

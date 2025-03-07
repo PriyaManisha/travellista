@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:travellista/models/journal_entry.dart';
 import 'package:travellista/providers/journal_entry_provider.dart';
-import 'package:travellista/entry_creation_form.dart';
+import 'package:travellista/router/app_router.dart';
 import 'package:travellista/video_player_widget.dart';
 import 'package:travellista/shared_scaffold.dart';
 
@@ -18,6 +19,7 @@ class EntryDetailPage extends StatefulWidget {
 
 class _EntryDetailPageState extends State<EntryDetailPage> {
   bool _isDeleting = false;
+  String entryUpdatePath(String id) => '/update/$id';
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +31,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
       );
 
       if (index == -1) {
-        Navigator.pop(context);
+        context.pop();
         return const SizedBox.shrink();
       }
 
@@ -43,12 +45,8 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
               IconButton(
                 icon: const Icon(Icons.edit),
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => EntryCreationForm(existingEntry: entry),
-                    ),
-                  );
+                  final id = widget.entryID;
+                  context.push(entryUpdatePath(id), extra: entry);
                 },
               ),
               IconButton(
@@ -94,11 +92,11 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
         content: const Text('Are you sure you want to delete this entry?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
+            onPressed: () => ctx.pop(false),
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
+            onPressed: () => ctx.pop(true),
             child: const Text('Delete'),
           ),
         ],
@@ -114,7 +112,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
           const SnackBar(content: Text('Entry deleted successfully!')),
         );
         await Future.delayed(const Duration(milliseconds: 500));
-        if (mounted) Navigator.pop(context);
+        if (mounted) context.go(homeRoute);
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Error deleting entry')),
@@ -234,7 +232,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                 right: 0,
                 child: IconButton(
                   icon: const Icon(Icons.close, color: Colors.white),
-                  onPressed: () => Navigator.of(ctx).pop(),
+                  onPressed: () => context.pop(ctx),
                 ),
               ),
             ],

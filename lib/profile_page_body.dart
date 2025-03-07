@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:travellista/util/storage_service.dart';
@@ -33,7 +34,7 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
   void initState() {
     super.initState();
     _storageService = widget.storageOverride ?? StorageService();
-    // st using "demoUser" for now:
+    // using "demoUser" for now:
     context.read<ProfileProvider>().fetchProfile("demoUser");
   }
 
@@ -62,7 +63,6 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
     return Stack(
       children: [
         _buildMainContent(profileProvider),
-        //currentProfile's "final" qualifier guarantees a non-null state
         if (_localIsSaving || (isLoadingProfile /*&& currentProfile != null*/))
           _buildOverlaySpinner(),
       ],
@@ -192,11 +192,11 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
           content: const Text("Are you sure you want to update your profile?"),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
+              onPressed: () => ctx.pop(false),
               child: const Text("Cancel"),
             ),
             ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, true),
+              onPressed: () => ctx.pop(true),
               child: const Text("Yes"),
             ),
           ],

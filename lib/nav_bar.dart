@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:travellista/router/app_router.dart';
 
 class NavBar extends StatelessWidget {
   final int selectedIndex;
@@ -7,16 +9,16 @@ class NavBar extends StatelessWidget {
   void _onItemTapped(BuildContext context, int index) {
     switch (index) {
       case 0:
-        Navigator.pushNamed(context, "/home");
+        context.go(homeRoute);
         break;
       case 1:
-        Navigator.pushNamedAndRemoveUntil(context, "/add",ModalRoute.withName("/home"));
+        context.go(createRoute);
         break;
       case 2:
-        Navigator.pushNamedAndRemoveUntil(context, "/map",ModalRoute.withName("/home"));
+        context.go(mapRoute);
         break;
       case 3:
-        Navigator.pushNamedAndRemoveUntil(context, "/profile",ModalRoute.withName("/home"));
+        context.go(profileRoute);
         break;
     }
   }
