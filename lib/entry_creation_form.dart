@@ -72,8 +72,7 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
   bool _isSaving = false;
   bool get _isEditMode => widget.existingEntry != null;
   bool get _isFormValid =>
-      _titleController.text.trim().isNotEmpty &&
-          _descriptionController.text.trim().isNotEmpty;
+      _titleController.text.trim().isNotEmpty;
 
   final ImagePicker _picker = ImagePicker();
 
@@ -92,7 +91,6 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
     _storageService = widget.storageOverride ?? StorageService();
 
     _titleController.addListener(() => setState(() {}));
-    _descriptionController.addListener(() => setState(() {}));
 
     if (_isEditMode) {
       final existing = widget.existingEntry!;
@@ -241,9 +239,6 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
         ),
       ),
       maxLines: 3,
-      validator: (value) => (value == null || value.isEmpty)
-          ? 'Please enter a description'
-          : null,
     );
   }
 
