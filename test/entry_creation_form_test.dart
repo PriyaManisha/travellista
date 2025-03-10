@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:travellista/entry_creation_form.dart';
 import 'package:mockito/annotations.dart';
@@ -77,7 +76,7 @@ main() {
 
 
       // ACT - Tap save button
-      final saveButton = find.text('Save Entry');
+      final saveButton = find.byIcon(Icons.save);
       await tester.ensureVisible(saveButton);
       await tester.tap(saveButton);
       await tester.pumpAndSettle();
@@ -161,7 +160,7 @@ main() {
       await tester.enterText(titleField, 'New Title');
 
       // Act: Tap update button
-      final updateButton = find.text('Update Entry');
+      final updateButton = find.byIcon(Icons.check);
       await tester.ensureVisible(updateButton);
       await tester.tap(updateButton);
       await tester.pumpAndSettle();
