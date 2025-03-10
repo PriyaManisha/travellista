@@ -9,6 +9,7 @@ class SharedScaffold extends StatelessWidget {
   final Widget body;
   final int selectedIndex;
   final bool showBackButton;
+  final Widget? floatingActionButton;
 
   const SharedScaffold({
     super.key,
@@ -18,6 +19,7 @@ class SharedScaffold extends StatelessWidget {
     this.actions,
     this.selectedIndex = 0,
     this.showBackButton = false,
+    this.floatingActionButton,
   });
 
   @override
@@ -30,6 +32,7 @@ class SharedScaffold extends StatelessWidget {
       ),
       bottomNavigationBar: NavBar(selectedIndex: selectedIndex),
       body: body,
+      floatingActionButton: floatingActionButton,
     );
   }
 }
