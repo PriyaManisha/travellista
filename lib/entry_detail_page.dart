@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -20,6 +21,7 @@ class EntryDetailPage extends StatefulWidget {
 
 class _EntryDetailPageState extends State<EntryDetailPage> {
   bool _isDeleting = false;
+  bool _isDescriptionExpanded = false;
 
   String entryUpdatePath(String id) => '/update/$id';
 
@@ -125,63 +127,105 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
     }
   }
 
+  int _getRenderedLineCount(String text, TextStyle? style, double maxWidth) {
+    final textSpan = TextSpan(text: text, style: style);
+    final textPainter = TextPainter(
+      text: textSpan,
+      textDirection: ui.TextDirection.ltr,
+      maxLines: null,
+    );
+    textPainter.layout(maxWidth: maxWidth);
+    return textPainter.computeLineMetrics().length;
+  }
+
   Widget _buildDetailBody(BuildContext context, JournalEntry entry) {
-    final theme = Theme
-        .of(context)
-        .textTheme;
-    return Column(
+    final theme = Theme.of(context).textTheme;
+    final description = entry.description ?? '';
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxWidth = constraints.maxWidth - 32.0;
+        final isDescriptionLong = _getRenderedLineCount(
+          description,
+          theme.bodyLarge,
+          maxWidth,
+        ) > 3;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (entry.timestamp != null)
+              Text(
+                'Date: ${DateFormat('MM/dd/yyyy').format(entry.timestamp!)}',
+                style: theme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+              ),
+            const SizedBox(height: 8),
+            if (entry.latitude != null && entry.longitude != null) ...[
+              Text(
+                'Location: ${entry.address ?? '${entry.latitude}, ${entry.longitude}'}',
+                style: theme.bodyLarge,
+              ),
+              const SizedBox(height: 16),
+            ],
+            if (entry.tags != null && entry.tags!.isNotEmpty) ...[
+              Text(
+                'Tags:',
+                style: theme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8.0,
+                runSpacing: -2.0,
+                children: entry.tags!.map((tag) {
+                  return ChipThemeUtil.buildStyledChip(
+                    label: tag,
+                    labelStyle: theme.bodyMedium,
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 16),
+            ],
+            if (description.isNotEmpty)
+              _buildDescriptionSection(context, description, isDescriptionLong),
+            if (entry.imageURLs != null && entry.imageURLs!.isNotEmpty)
+              _buildImageSection(context, entry.imageURLs!),
+            if (entry.videoURLs != null && entry.videoURLs!.isNotEmpty)
+              _buildVideoSection(context, entry),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDescriptionSection(BuildContext context, String description, bool isDescriptionLong,) {
+    final theme = Theme.of(context).textTheme;
+    return description.isNotEmpty
+        ? Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (entry.timestamp != null)
-          Text(
-            'Date: ${DateFormat('MM/dd/yyyy').format(entry.timestamp!)}',
-            style: theme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+        Text(
+          description,
+          style: theme.bodyLarge,
+          maxLines: _isDescriptionExpanded ? null : 3,
+          overflow: _isDescriptionExpanded ? null : TextOverflow.ellipsis,
+        ),
+        if (isDescriptionLong)
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _isDescriptionExpanded = !_isDescriptionExpanded;
+              });
+            },
+            child: Text(
+              _isDescriptionExpanded ? 'Read Less' : 'Read More',
+              style: theme.bodyMedium?.copyWith(
+                color: Theme.of(context).primaryColor,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
           ),
-        const SizedBox(height: 8),
-
-        if (entry.description != null && entry.description!.isNotEmpty) ...[
-          Text(
-            entry.description!,
-            style: theme.bodyLarge,
-          ),
-          const SizedBox(height: 16),
-        ],
-
-        if (entry.latitude != null && entry.longitude != null) ...[
-          Text(
-            'Location: ${entry.address ??
-                '${entry.latitude}, ${entry.longitude}'}',
-            style: theme.bodyMedium?.copyWith(fontStyle: FontStyle.italic),
-          ),
-          const SizedBox(height: 16),
-        ],
-
-        if (entry.tags != null && entry.tags!.isNotEmpty) ...[
-          Text(
-            'Tags:',
-            style: theme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8.0,
-            runSpacing: -2.0,
-            children: entry.tags!.map((tag) {
-              return ChipThemeUtil.buildStyledChip(
-                label: tag,
-                labelStyle: theme.bodyMedium,
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 16),
-        ],
-
-        if (entry.imageURLs != null && entry.imageURLs!.isNotEmpty)
-          _buildImageSection(context, entry.imageURLs!),
-
-        if (entry.videoURLs != null && entry.videoURLs!.isNotEmpty)
-          _buildVideoSection(context, entry),
+        const SizedBox(height: 16),
       ],
-    );
+    )
+        : const SizedBox.shrink();
   }
 
   Widget _buildImageSection(BuildContext context, List<String> imageURLs) {
