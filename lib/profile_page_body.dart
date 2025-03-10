@@ -18,12 +18,8 @@ class ProfilePageBody extends StatefulWidget {
 class _ProfilePageBodyState extends State<ProfilePageBody> {
   late StorageService _storageService = StorageService();
   final ImagePicker _picker = ImagePicker();
-
-  // Booleans for loading states
   bool _isEditing = false;
   bool _localIsSaving = false;
-
-  // Profile fields
   String? _firstName;
   String? _lastName;
   String _displayName = "";
@@ -52,20 +48,24 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
       return const Center(child: Text('No profile found'));
     }
 
-    if (!_isEditing) {
+    if (!_isEditing && _firstName == null) {
       _firstName = currentProfile.firstName;
       _lastName = currentProfile.lastName;
       _photoUrl = currentProfile.photoUrl;
       _displayName = currentProfile.displayName;
       _email = currentProfile.email;
     }
-
-    return Stack(
-      children: [
-        _buildMainContent(profileProvider),
-        if (_localIsSaving || (isLoadingProfile /*&& currentProfile != null*/))
-          _buildOverlaySpinner(),
-      ],
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: Stack(
+        children: [
+          _buildMainContent(profileProvider),
+          if (_localIsSaving || (isLoadingProfile /*&& currentProfile != null*/))
+            _buildOverlaySpinner(),
+        ],
+      ),
     );
   }
 
@@ -100,6 +100,8 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
             initialValue: _email,
             onChanged: (val) => _email = val,
           ),
+          const SizedBox(height: 16),
+          _buildActionButtons(provider),
           const SizedBox(height: 24),
         ] else ...[
           _buildDisplayRow("First Name", _firstName ?? ''),
@@ -109,29 +111,64 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
           _buildDisplayRow("Display Name", _displayName),
           const SizedBox(height: 16),
           _buildDisplayRow("Email", _email),
+          const SizedBox(height: 16),
+          _buildActionButtons(provider),
           const SizedBox(height: 24),
         ],
-
-        _buildActionButtons(provider),
-
-        const SizedBox(height: 24),
         _buildDarkModeSwitch(),
       ],
     );
   }
 
   Widget _buildProfilePicture() {
-    return InkWell(
-      onTap: _isEditing ? _pickProfilePicture : null,
-      child: CircleAvatar(
-        radius: 40,
-        backgroundImage: (_photoUrl != null && _photoUrl!.isNotEmpty)
-            ? NetworkImage(_photoUrl!)
-            : null,
-        child: (_photoUrl == null || _photoUrl!.isEmpty)
-            ? const Icon(Icons.person, size: 40)
-            : null,
-      ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            CircleAvatar(
+              radius: 40,
+              backgroundImage: (_photoUrl != null && _photoUrl!.isNotEmpty)
+                  ? NetworkImage(_photoUrl!)
+                  : null,
+              child: (_photoUrl == null || _photoUrl!.isEmpty)
+                  ? const Icon(Icons.person, size: 40)
+                  : null,
+            ),
+            if (_isEditing && _photoUrl != null && _photoUrl!.isNotEmpty)
+              Positioned(
+                right: 0,
+                top: 0,
+                child: IconButton(
+                  icon: const Icon(Icons.close, size: 18, color: Colors.red),
+                  onPressed: () async {
+                    if (_photoUrl != null) {
+                      await _storageService.deleteFileByUrl(_photoUrl!);
+                    }
+                    setState(() {
+                      _photoUrl = null;
+                    });
+                  },
+                ),
+              ),
+          ],
+        ),
+        if (_isEditing)
+          InkWell(
+            onTap: _pickProfilePicture,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(
+                "Change Picture",
+                style: TextStyle(
+                  color: Theme.of(context).primaryColor,
+                  fontSize: Theme.of(context).textTheme.bodyMedium?.fontSize,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 
@@ -185,9 +222,19 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
         ],
       );
     } else {
-      return ElevatedButton(
+      return TextButton(
+        style: TextButton.styleFrom(
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.only(left: 0),
+        ),
         onPressed: () => setState(() => _isEditing = true),
-        child: const Text("Edit Profile"),
+        child: Text(
+          "Edit Profile",
+          style: TextStyle(
+            color: Theme.of(context).primaryColor,
+            fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+          ),
+        ),
       );
     }
   }
@@ -230,7 +277,6 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
       email: _email,
       photoUrl: _photoUrl,
     );
-
     try {
       await provider.saveProfile(updated);
       if (mounted) {
@@ -286,11 +332,16 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
   }
 
   Widget _buildDarkModeSwitch() {
+    final theme = Theme.of(context).textTheme;
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: ThemeManager.themeNotifier,
       builder: (context, currentTheme, child) {
         return SwitchListTile(
-          title: const Text('Dark Mode'),
+          contentPadding: const EdgeInsets.only(left: 0, right: 16.0),
+          title: Text(
+            'Dark Mode',
+            style: theme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
           value: currentTheme == ThemeMode.dark,
           onChanged: (_) => ThemeManager.toggleTheme(),
         );
