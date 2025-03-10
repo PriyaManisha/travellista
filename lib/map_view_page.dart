@@ -37,28 +37,28 @@ class _MapViewPageState extends State<MapViewPage> {
     }
 
     final filteredEntries = _buildFilteredList(allEntries, _searchQuery);
-
     final grouped = _groupEntriesByLatLng(filteredEntries);
-    final Set<Marker> markers = {};
 
+    final Set<Marker> markers = {};
     for (var latLongKey in grouped.keys) {
       final latLng = _parseLatLongKey(latLongKey);
       final entriesAtLocation = grouped[latLongKey]!;
-      markers.add(Marker(
-        markerId: MarkerId(latLongKey),
-        position: latLng,
-        consumeTapEvents: true,
-        onTap: () => _showMarkerEntriesBottomSheet(context, entriesAtLocation),
-      ));
+      markers.add(
+        Marker(
+          markerId: MarkerId(latLongKey),
+          position: latLng,
+          consumeTapEvents: true,
+          onTap: () => _showMarkerEntriesBottomSheet(context, entriesAtLocation),
+        ),
+      );
     }
 
-    // Compute map's initial camera position
+    // Determine map's initial camera position & bounding box
     final initialCameraPosition = const CameraPosition(
       target: LatLng(47.6061, -122.3328),
       zoom: 3,
     );
 
-    // If we have at least one marker, figure out bounding box
     if (markers.isNotEmpty) {
       double minLat = double.infinity, maxLat = -double.infinity;
       double minLng = double.infinity, maxLng = -double.infinity;
@@ -75,43 +75,43 @@ class _MapViewPageState extends State<MapViewPage> {
       );
     }
 
-    // Return SharedScaffold with search widget
     return SharedScaffold(
       titleWidget: EntrySearchBar(
         title: 'Map View',
         isSearching: _isSearching,
-        onSearchChanged: (val) {
-          setState(() {
-            _searchQuery = val;
-          });
-        },
+        onSearchChanged: (val) => setState(() => _searchQuery = val),
         onSearchToggled: (newVal) {
           setState(() {
             _isSearching = newVal;
-            if (!_isSearching) {
-              _searchQuery = '';
-            }
+            if (!_isSearching) _searchQuery = '';
           });
         },
       ),
       selectedIndex: 2,
-      body: GoogleMap(
-        initialCameraPosition: initialCameraPosition,
-        markers: markers,
-        onMapCreated: (controller) async {
-          _mapController.complete(controller);
-
-          if (_overallBounds != null) {
-            await Future.delayed(const Duration(milliseconds: 200));
-            controller.animateCamera(
-              CameraUpdate.newLatLngBounds(_overallBounds!, 60),
-            );
-          }
-        },
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: GoogleMap(
+          onMapCreated: (controller) async {
+            _mapController.complete(controller);
+            if (_overallBounds != null) {
+              await Future.delayed(const Duration(milliseconds: 200));
+              controller.animateCamera(
+                CameraUpdate.newLatLngBounds(_overallBounds!, 60),
+              );
+            }
+          },
+          onTap: (LatLng position) {
+            FocusScope.of(context).unfocus();
+          },
+          initialCameraPosition: initialCameraPosition,
+          markers: markers,
+        ),
       ),
     );
   }
 
+  // Filter logic
   List<JournalEntry> _buildFilteredList(List<JournalEntry> allEntries, String query) {
     if (!_isSearching || query.trim().isEmpty) {
       return allEntries;
@@ -141,7 +141,6 @@ class _MapViewPageState extends State<MapViewPage> {
     return grouped;
   }
 
-  // Parse lat,long
   LatLng _parseLatLongKey(String key) {
     final parts = key.split(',');
     final lat = double.parse(parts[0]);
@@ -153,44 +152,56 @@ class _MapViewPageState extends State<MapViewPage> {
   void _showMarkerEntriesBottomSheet(BuildContext context, List<JournalEntry> entries) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (ctx) {
-        return ListView.builder(
-          shrinkWrap: true,
-          itemCount: entries.length,
-          itemBuilder: (context, index) {
-            final e = entries[index];
-            return ListTile(
-              leading: SizedBox(
-                width: 50,
-                height: 50,
-                child: e.imageURLs?.isNotEmpty == true
-                    ? ClipRRect(
-                  borderRadius: BorderRadius.circular(8.0),
-                  child: Image.network(
-                    e.imageURLs![0],
+        return DraggableScrollableSheet(
+          initialChildSize: 0.2,
+          minChildSize: 0.2,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (BuildContext context, ScrollController scrollController) {
+            return ListView.builder(
+              controller: scrollController,
+              itemCount: entries.length,
+              itemBuilder: (context, index) {
+                final e = entries[index];
+                return ListTile(
+                  leading: SizedBox(
                     width: 50,
                     height: 50,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return const Center(
-                        child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(),
-                        ),
-                      );
-                    },
+                    child: e.imageURLs?.isNotEmpty == true
+                        ? ClipRRect(
+                      borderRadius: BorderRadius.circular(8.0),
+                      child: Image.network(
+                        e.imageURLs![0],
+                        width: 50,
+                        height: 50,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return const Center(
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        },
+                      ),
+                    )
+                        : const Icon(Icons.photo, size: 40),
                   ),
-                )
-                    : const Icon(Icons.photo, size: 40),
-              ),
-              title: Text(e.title ?? 'Untitled'),
-              subtitle: Text('${e.address}'),
-              onTap: () {
-                context.pop();
-                final entryID = e.entryID;
-                context.push('$entryDetailPath$entryID');
+                  title: Text(e.title ?? 'Untitled'),
+                  subtitle: Text(e.address ?? ''),
+                  onTap: () {
+                    context.pop();
+                    final entryID = e.entryID;
+                    context.push('$entryDetailPath$entryID');
+                  },
+                );
               },
             );
           },

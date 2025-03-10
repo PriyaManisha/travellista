@@ -50,12 +50,11 @@ class _HomeScreenPageState extends State<HomeScreenPage> {
 
     final sortedGroups = _groupAndSortEntries(filteredEntries);
 
-    return _buildMainScaffold(sortedGroups);
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: _buildMainScaffold(sortedGroups),
+    );
   }
-
-  // ------------------------------------------
-  //    PRIVATE HELPER WIDGETS / METHODS
-  // ------------------------------------------
 
   Widget _buildNoEntriesYetScaffold() {
     return const SharedScaffold(
@@ -73,7 +72,15 @@ class _HomeScreenPageState extends State<HomeScreenPage> {
         title: 'Travellista',
         isSearching: _isSearching,
         onSearchChanged: (val) => setState(() => _searchQuery = val),
-        onSearchToggled: (val) => setState(() => _isSearching = val),
+        onSearchToggled: (val) {
+          setState(() {
+            _isSearching = val;
+            if (!_isSearching) {
+              _searchQuery = '';
+              FocusScope.of(context).unfocus();
+            }
+          });
+        },
       ),
       selectedIndex: 0,
       body: const Center(child: Text('No entries match your search.')),
@@ -86,7 +93,15 @@ class _HomeScreenPageState extends State<HomeScreenPage> {
         title: 'Travellista',
         isSearching: _isSearching,
         onSearchChanged: (val) => setState(() => _searchQuery = val),
-        onSearchToggled: (val) => setState(() => _isSearching = val),
+        onSearchToggled: (val) {
+          setState(() {
+            _isSearching = val;
+            if (!_isSearching) {
+              _searchQuery = '';
+              FocusScope.of(context).unfocus();
+            }
+          });
+        },
       ),
       selectedIndex: 0,
       body: ListView(
@@ -108,10 +123,6 @@ class _HomeScreenPageState extends State<HomeScreenPage> {
       ),
     );
   }
-
-  // ------------------------------------------
-  //     LOGIC FOR FILTERING / GROUPING
-  // ------------------------------------------
 
   List<JournalEntry> _buildFilteredList(List<JournalEntry> allEntries, String query) {
     if (!_isSearching || query.trim().isEmpty) {
@@ -154,11 +165,6 @@ class _HomeScreenPageState extends State<HomeScreenPage> {
   }
 }
 
-// -----------------------------------------------------------
-//   HELPER FUNCTIONS FOR PARSED LOCATION
-// -----------------------------------------------------------
-
-// Group by state, country for now
 String computeGroupKey(JournalEntry entry) {
   final parsed = parseAddress(entry.address);
 

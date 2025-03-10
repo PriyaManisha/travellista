@@ -22,9 +22,6 @@ class LocationPickerScreen extends StatefulWidget {
 }
 
 class _LocationPickerScreenState extends State<LocationPickerScreen> {
-  // ------------------------------------
-  // Fields
-  // ------------------------------------
   late final ILocationService _service;
   final Completer<GoogleMapController> _mapController = Completer();
   final TextEditingController _searchController = TextEditingController();
@@ -41,9 +38,6 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   String? _pickedRegion;
   String? _pickedCountry;
 
-  // ------------------------------------
-  // Lifecycle
-  // ------------------------------------
   @override
   void initState() {
     super.initState();
@@ -51,7 +45,6 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
     _pickedLocation = widget.initialLocation;
     _pickedAddress = widget.initialAddress;
 
-    // Initialize Google Places Autocomplete
     _placesService = GooglePlacesAutocomplete(
       apiKey: _apiKey,
       debounceTime: 300,
@@ -70,14 +63,14 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
     super.dispose();
   }
 
-  // ------------------------------------
-  // Build
-  // ------------------------------------
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: _buildAppBar(),
-      body: _buildBody(),
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        appBar: _buildAppBar(),
+        body: _buildBody(),
+      ),
     );
   }
 
@@ -104,9 +97,6 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
     );
   }
 
-  // ------------------------------------
-  // Private UI Builders
-  // ------------------------------------
   Widget _buildSearchField() {
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -126,6 +116,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
             });
           }
         },
+        onTapOutside: (_) => FocusScope.of(context).unfocus(),
       ),
     );
   }
@@ -143,7 +134,10 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
           return ListTile(
             title: Text(prediction.title ?? ''),
             subtitle: Text(prediction.description ?? ''),
-            onTap: () => _onPredictionSelected(prediction),
+            onTap: () {
+              _onPredictionSelected(prediction);
+              FocusScope.of(context).unfocus();
+            },
           );
         },
       ),
@@ -166,7 +160,10 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
             onDragEnd: (pos) => _updateLocation(pos),
           ),
       },
-      onTap: (pos) => _updateLocation(pos),
+      onTap: (pos) {
+        _updateLocation(pos);
+        FocusScope.of(context).unfocus();
+      },
     );
   }
 
@@ -191,10 +188,8 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
     );
   }
 
-  // ------------------------------------
-  // Private Logic
-  // ------------------------------------
   void _onCheckPressed() {
+    FocusScope.of(context).unfocus();
     context.pop(
       PickedLocationResult(
         latLng: _pickedLocation,
@@ -263,9 +258,6 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Helper to return from Nav
-// ---------------------------------------------------------------------------
 class PickedLocationResult {
   final LatLng? latLng;
   final String? address;
