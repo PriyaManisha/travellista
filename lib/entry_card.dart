@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:travellista/models/journal_entry.dart';
+import 'package:travellista/util/chip_theme_util.dart';
 
 class EntryCard extends StatelessWidget {
   final JournalEntry entry;
@@ -9,8 +10,6 @@ class EntryCard extends StatelessWidget {
   const EntryCard({super.key, required this.entry});
 
   String entryDetailPath(String id) => '/entry/$id';
-
-  static const Color chipPurple = Color(0xFF7E57C2);
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +41,6 @@ class EntryCard extends StatelessWidget {
     );
   }
 
-  // Banner image (spans card width, 100px height)
   Widget _buildBannerImage(BuildContext context) {
     if (entry.imageURLs != null && entry.imageURLs!.isNotEmpty) {
       return ClipRRect(
@@ -84,7 +82,6 @@ class EntryCard extends StatelessWidget {
     }
   }
 
-  // Column of text & chips
   Widget _buildTextSection(BuildContext context, TextTheme theme, String date, String address) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -103,23 +100,14 @@ class EntryCard extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 8),
-        // Tags
         if (entry.tags != null && entry.tags!.isNotEmpty)
           Wrap(
             spacing: 6.0,
             runSpacing: -2.0,
             children: entry.tags!.map((tag) {
-              return Chip(
-                label: Text(
-                  tag,
-                  style: theme.bodySmall?.copyWith(color: Colors.white),
-                ),
-                backgroundColor: chipPurple,
-                visualDensity: VisualDensity.compact,
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
+              return ChipThemeUtil.buildStyledChip(
+                label: tag,
+                labelStyle: theme.bodySmall,
               );
             }).toList(),
           ),

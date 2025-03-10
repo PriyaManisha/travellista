@@ -3,9 +3,8 @@ import 'package:travellista/models/journal_entry.dart';
 
 void main() {
   group('JournalEntry Model Tests', () {
-
     test('Default constructor should set all properties properly', () {
-      // setup / given / arrange
+      // Setup / Given / Arrange
       final entry = JournalEntry(
         entryID: '123',
         userID: 'userABC',
@@ -16,6 +15,7 @@ void main() {
         longitude: -122.4194,
         imageURLs: ['http://example.com/img1.jpg'],
         videoURLs: ['http://example.com/video1.mp4'],
+        videoThumbnailURLs: ['http://example.com/thumb1.jpg'], // Added
         address: 'San Francisco, CA, United States',
         monthName: 'February',
         localeName: 'en_US',
@@ -34,6 +34,7 @@ void main() {
       expect(entry.longitude, -122.4194);
       expect(entry.imageURLs, ['http://example.com/img1.jpg']);
       expect(entry.videoURLs, ['http://example.com/video1.mp4']);
+      expect(entry.videoThumbnailURLs, ['http://example.com/thumb1.jpg']); // Added
       expect(entry.address, 'San Francisco, CA, United States');
       expect(entry.tags, ['tag1', 'tag2']);
       expect(entry.monthName, 'February');
@@ -43,13 +44,14 @@ void main() {
     });
 
     test('`newEntry` constructor should generate default fields', () {
-      // setup / given / arrange
+      // Setup / Given / Arrange
       final entry = JournalEntry.newEntry(
         userID: 'userABC',
         title: 'New Entry Title',
         description: 'A new entry description',
         imageURLs: ['img1', 'img2'],
         videoURLs: ['vid1'],
+        videoThumbnailURLs: ['thumb1'], // Added
         tags: ['travel', 'food'],
       );
 
@@ -60,6 +62,7 @@ void main() {
       expect(entry.description, 'A new entry description');
       expect(entry.imageURLs, ['img1', 'img2']);
       expect(entry.videoURLs, ['vid1']);
+      expect(entry.videoThumbnailURLs, ['thumb1']); // Added
       expect(entry.tags, ['travel', 'food']);
 
       // The newEntry constructor sets timestamp = now
@@ -76,7 +79,7 @@ void main() {
     });
 
     test('toMap() and fromMap() should correctly serialize/deserialize fields', () {
-      // setup / given / arrange
+      // Setup / Given / Arrange
       final date = DateTime(2025, 02, 02, 12, 30);
       final entry = JournalEntry(
         entryID: 'abc123',
@@ -88,6 +91,7 @@ void main() {
         longitude: -122.4194,
         imageURLs: ['img1', 'img2'],
         videoURLs: ['vid1'],
+        videoThumbnailURLs: ['thumb1'], // Added
         tags: ['tagA'],
         address: 'San Francisco, CA, United States',
         monthName: 'February',
@@ -96,7 +100,7 @@ void main() {
         countryName: 'United States',
       );
 
-      // Convert to map
+      // ACT / ASSERT : Convert to map
       final map = entry.toMap();
       expect(map['entryID'], 'abc123');
       expect(map['userID'], 'user123');
@@ -107,6 +111,7 @@ void main() {
       expect(map['longitude'], -122.4194);
       expect(map['imageURLs'], ['img1', 'img2']);
       expect(map['videoURLs'], ['vid1']);
+      expect(map['videoThumbnailURLs'], ['thumb1']); // Added
       expect(map['tags'], ['tagA']);
       expect(map['address'], 'San Francisco, CA, United States');
       expect(map['monthName'], 'February');
@@ -114,7 +119,7 @@ void main() {
       expect(map['regionName'], 'CA');
       expect(map['countryName'], 'United States');
 
-      // Rebuild from map
+      // ACT / ASSERT : Convert back to JournalEntry
       final rebuiltEntry = JournalEntry.fromMap(map);
       expect(rebuiltEntry.entryID, entry.entryID);
       expect(rebuiltEntry.userID, entry.userID);
@@ -125,6 +130,7 @@ void main() {
       expect(rebuiltEntry.longitude, entry.longitude);
       expect(rebuiltEntry.imageURLs, entry.imageURLs);
       expect(rebuiltEntry.videoURLs, entry.videoURLs);
+      expect(rebuiltEntry.videoThumbnailURLs, entry.videoThumbnailURLs); // Added
       expect(rebuiltEntry.tags, entry.tags);
       expect(rebuiltEntry.address, entry.address);
       expect(rebuiltEntry.monthName, entry.monthName);
@@ -133,9 +139,8 @@ void main() {
       expect(rebuiltEntry.countryName, entry.countryName);
     });
 
-
     test('toString() should return a formatted string with all fields', () {
-      // Arrange
+      // Arrange - Create a JournalEntry
       final entry = JournalEntry(
         entryID: 'idXYZ',
         userID: 'userXYZ',
@@ -148,6 +153,7 @@ void main() {
         localeName: 'en_US',
         regionName: 'CA',
         countryName: 'United States',
+        videoThumbnailURLs: ['thumb1'], // Added
       );
 
       // Act
@@ -168,13 +174,14 @@ void main() {
           contains('localeName: en_US'),
           contains('regionName: CA'),
           contains('countryName: United States'),
+          contains('thumbnailURL: [thumb1]'), // Updated to match actual field name
         ]),
         reason: 'Expected toString() to contain all relevant fields',
       );
     });
 
     test('copyWith() should allow overriding select fields, while preserving others', () {
-      // Arrange
+      // Arrange - Create an original JournalEntry
       final original = JournalEntry(
         entryID: 'origID',
         userID: 'origUser',
@@ -185,6 +192,7 @@ void main() {
         longitude: 20.0,
         imageURLs: ['origImg'],
         videoURLs: ['origVid'],
+        videoThumbnailURLs: ['origThumb'], // Added
         tags: ['origTag'],
         address: 'Original Address',
         monthName: 'January',
@@ -193,12 +201,13 @@ void main() {
         countryName: 'USA',
       );
 
-      // Act
+      // Act : Create a copy with updated fields
       final copy = original.copyWith(
         userID: 'newUser',
         address: 'New Address',
         latitude: 99.99,
         monthName: 'August',
+        videoThumbnailURLs: ['newThumb'], // Added
       );
 
       // Assert - Overridden fields
@@ -206,6 +215,7 @@ void main() {
       expect(copy.address, 'New Address');
       expect(copy.latitude, 99.99);
       expect(copy.monthName, 'August');
+      expect(copy.videoThumbnailURLs, ['newThumb']); // Added
 
       // Assert - Preserved fields remain the same
       expect(copy.entryID, 'origID');
@@ -220,7 +230,7 @@ void main() {
       expect(copy.regionName, 'TX');
       expect(copy.countryName, 'USA');
 
-      // copy is a different instance
+      // Assert - Copy is a different instance
       expect(copy, isNot(same(original)));
     });
 
@@ -231,10 +241,11 @@ void main() {
         entry = JournalEntry(userID: 'initialUser');
       });
 
+      // Test the entryID setter
       test('entryID setter: disallows empty string', () {
         expect(entry.entryID, isNull);
 
-        // Act
+        // Act - try to set empty entry ID
         entry.entryID = 'myNewID';
         expect(entry.entryID, 'myNewID');
 
@@ -244,7 +255,7 @@ void main() {
             reason: 'Should not allow empty string according to the setter logic');
       });
 
-      // Additional tests for setters
+      // Test the userID setter
       test('userID setter: disallows empty string', () {
         expect(entry.userID, 'initialUser');
 
@@ -254,14 +265,14 @@ void main() {
         expect(entry.userID, 'initialUser');
       });
 
-      // Additional tests address setter
+      // Test the address setter
       test('address setter: should contain updated params', () {
         expect(entry.address, isNull);
         entry.address = 'New Address';
         expect(entry.address, 'New Address');
       });
 
-      // Additional tests for lng/lat setter
+      // Test the lat/long setters
       test('latitude and longitude setters: should update lat/long', () {
         expect(entry.latitude, isNull);
         entry.latitude = 12.3456;
@@ -272,21 +283,21 @@ void main() {
         expect(entry.longitude, 65.4321);
       });
 
-      // Additional tests for tag setter
+      // Test the tags setters
       test('tags setter - should update tag params', () {
         expect(entry.tags, isEmpty);
         entry.tags = ['tag1', 'tag2'];
         expect(entry.tags, ['tag1', 'tag2']);
       });
 
-      // Additional tests for date setter
+      // Test the timestamp setter
       test('timestamp setter - should update timestamp param', () {
         final newTime = DateTime(2030, 1, 1);
         entry.timestamp = newTime;
         expect(entry.timestamp, newTime);
       });
 
-      // Additional tests for setters
+      // Test the monthname, locale, region, country setters
       test('monthName, localeName, regionName, countryName setters', () {
         expect(entry.monthName, isNull);
         entry.monthName = 'January';
@@ -303,6 +314,13 @@ void main() {
         expect(entry.countryName, isNull);
         entry.countryName = 'United Kingdom';
         expect(entry.countryName, 'United Kingdom');
+      });
+
+      // Test the videoThumbnailURLs setter
+      test('videoThumbnailURLs setter - should update video thumbnail URLs', () {
+        expect(entry.videoThumbnailURLs, isEmpty);
+        entry.videoThumbnailURLs = ['thumb1', 'thumb2'];
+        expect(entry.videoThumbnailURLs, ['thumb1', 'thumb2']);
       });
     });
   });

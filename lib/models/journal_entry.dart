@@ -17,6 +17,7 @@ class JournalEntry {
   String? _localeName;
   String? _regionName;
   String? _countryName;
+  List<String>? _videoThumbnailURLs;
 
   JournalEntry({
     String? entryID,
@@ -34,6 +35,7 @@ class JournalEntry {
     String? localeName,
     String? regionName,
     String? countryName,
+    List<String>? videoThumbnailURLs = const [],
   })  : _entryID = entryID,
         _userID = userID,
         _timestamp = timestamp,
@@ -48,7 +50,8 @@ class JournalEntry {
         _monthName = monthName,
         _localeName = localeName,
         _regionName = regionName,
-        _countryName = countryName;
+        _countryName = countryName,
+        _videoThumbnailURLs = videoThumbnailURLs;
 
   JournalEntry.newEntry({
     required String userID,
@@ -57,11 +60,13 @@ class JournalEntry {
     List<String>? imageURLs = const [],
     List<String>? videoURLs = const [],
     List<String>? tags = const [],
+    List<String>? videoThumbnailURLs = const [],
   })  : _userID = userID,
         _title = title,
         _description = description,
         _imageURLs = imageURLs,
         _videoURLs = videoURLs,
+        _videoThumbnailURLs = videoThumbnailURLs,
         _tags = tags {
     _timestamp = DateTime.now();
     _entryID = null;
@@ -98,6 +103,7 @@ class JournalEntry {
   set localeName(String? newLocaleName) => _localeName = newLocaleName;
   set regionName(String? newRegionName) => _regionName = newRegionName;
   set countryName(String? newCountryName) => _countryName = newCountryName;
+  set videoThumbnailURLs(List<String>? newvideoThumbnailURLs) => _videoThumbnailURLs = newvideoThumbnailURLs;
 
   // Getters
 
@@ -116,6 +122,7 @@ class JournalEntry {
   String? get localeName => _localeName;
   String? get regionName => _regionName;
   String? get countryName => _countryName;
+  List<String>? get videoThumbnailURLs => _videoThumbnailURLs;
 
   // Method to convert JournalEntry Map for Firestore
   Map<String, dynamic> toMap() {
@@ -135,6 +142,7 @@ class JournalEntry {
       'localeName': _localeName,
       'regionName': _regionName,
       'countryName': _countryName,
+      'videoThumbnailURLs': _videoThumbnailURLs,
     };
   }
 
@@ -161,6 +169,7 @@ class JournalEntry {
       localeName: map['localeName'] as String?,
       regionName: map['regionName'] as String?,
       countryName: map['countryName'] as String?,
+      videoThumbnailURLs: List<String>.from(map['videoThumbnailURLs'] ?? []),
     );
   }
 
@@ -182,7 +191,8 @@ class JournalEntry {
         'monthName: $_monthName, '
         'localeName: $_localeName, '
         'regionName: $_regionName, '
-        'countryName: $_countryName'
+        'countryName: $_countryName,'
+        'thumbnailURL: $_videoThumbnailURLs'
         '}';
   }
 
@@ -204,6 +214,7 @@ class JournalEntry {
     String? localeName,
     String? regionName,
     String? countryName,
+    List<String>? videoThumbnailURLs,
   }) {
     return JournalEntry(
       entryID: entryID ?? this.entryID,
@@ -217,10 +228,11 @@ class JournalEntry {
       videoURLs: videoURLs ?? this.videoURLs,
       tags: tags ?? this.tags,
       address: address ?? this.address,
-      monthName: monthName ?? _monthName,
-      localeName: localeName ?? _localeName,
-      regionName: regionName ?? _regionName,
-      countryName: countryName ?? _countryName,
+      monthName: monthName ?? this._monthName,
+      localeName: localeName ?? this._localeName,
+      regionName: regionName ?? this._regionName,
+      countryName: countryName ?? this._countryName,
+      videoThumbnailURLs: videoThumbnailURLs ?? this._videoThumbnailURLs,
     );
   }
 }

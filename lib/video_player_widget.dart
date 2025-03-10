@@ -38,7 +38,8 @@ class _ChewieVideoPlayerState extends State<ChewieVideoPlayer> {
       // Network URL
       _videoPlayerController = VideoPlayerController.network(widget.videoUrl!);
     } else {
-      throw ArgumentError('Either file or url must be provided to ChewieVideoPlayerWidget.');
+      throw ArgumentError(
+          'Either file or url must be provided to ChewieVideoPlayerWidget.');
     }
 
     _videoPlayerController.initialize().then((_) {
@@ -46,7 +47,7 @@ class _ChewieVideoPlayerState extends State<ChewieVideoPlayer> {
         videoPlayerController: _videoPlayerController,
         autoPlay: false,
         looping: false,
-        autoInitialize: false,
+        autoInitialize: true,
         showControlsOnInitialize: false,
         allowMuting: true,
         allowFullScreen: true,
@@ -69,9 +70,8 @@ class _ChewieVideoPlayerState extends State<ChewieVideoPlayer> {
     if (!_initialized) {
       return const Center(child: CircularProgressIndicator());
     }
-    return SizedBox(
-      width: widget.width ?? 200,
-      height: widget.height ?? 200,
+    return AspectRatio(
+      aspectRatio: _videoPlayerController.value.aspectRatio,
       child: Chewie(controller: _chewieController!),
     );
   }

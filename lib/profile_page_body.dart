@@ -140,18 +140,27 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
     required String initialValue,
     required ValueChanged<String> onChanged,
   }) {
+    final theme = Theme.of(context).textTheme;
     return TextFormField(
-      decoration: InputDecoration(labelText: label),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: theme.bodyLarge,
+        hintStyle: theme.bodyMedium?.copyWith(fontStyle: FontStyle.italic),
+      ),
       initialValue: initialValue,
       onChanged: onChanged,
     );
   }
 
   Widget _buildDisplayRow(String label, String value) {
+    final theme = Theme.of(context).textTheme;
     return Row(
       children: [
-        Text("$label: ", style: const TextStyle(fontWeight: FontWeight.bold)),
-        Expanded(child: Text(value)),
+        Text(
+          "$label: ",
+          style: theme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        Expanded(child: Text(value, style: theme.bodyLarge)),
       ],
     );
   }
@@ -270,8 +279,8 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
   Widget _buildOverlaySpinner() {
     return Container(
       color: Colors.black54,
-      child: const Center(
-        child: CircularProgressIndicator(color: Colors.deepPurple),
+      child: Center(
+        child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
       ),
     );
   }

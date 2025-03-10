@@ -7,6 +7,7 @@ import 'package:travellista/providers/journal_entry_provider.dart';
 import 'package:travellista/router/app_router.dart';
 import 'package:travellista/video_player_widget.dart';
 import 'package:travellista/shared_scaffold.dart';
+import 'package:travellista/util/chip_theme_util.dart';
 
 class EntryDetailPage extends StatefulWidget {
   final String entryID;
@@ -19,6 +20,7 @@ class EntryDetailPage extends StatefulWidget {
 
 class _EntryDetailPageState extends State<EntryDetailPage> {
   bool _isDeleting = false;
+
   String entryUpdatePath(String id) => '/update/$id';
 
   @override
@@ -87,20 +89,21 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   Future<void> _confirmDelete(BuildContext context, JournalEntry entry) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Confirm Delete'),
-        content: const Text('Are you sure you want to delete this entry?'),
-        actions: [
-          TextButton(
-            onPressed: () => ctx.pop(false),
-            child: const Text('Cancel'),
+      builder: (ctx) =>
+          AlertDialog(
+            title: const Text('Confirm Delete'),
+            content: const Text('Are you sure you want to delete this entry?'),
+            actions: [
+              TextButton(
+                onPressed: () => ctx.pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => ctx.pop(true),
+                child: const Text('Delete'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => ctx.pop(true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
     );
 
     if (confirmed == true) {
@@ -123,60 +126,72 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   }
 
   Widget _buildDetailBody(BuildContext context, JournalEntry entry) {
+    final theme = Theme
+        .of(context)
+        .textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (entry.timestamp != null)
           Text(
             'Date: ${DateFormat('MM/dd/yyyy').format(entry.timestamp!)}',
-            style: const TextStyle(fontWeight: FontWeight.w500),
+            style: theme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
           ),
         const SizedBox(height: 8),
 
-        if (entry.description != null && entry.description!.isNotEmpty)
-          Text(entry.description!),
-        const SizedBox(height: 16),
-
-        if (entry.latitude != null && entry.longitude != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 16.0),
-            child: Text(
-              'Location: ${entry.address ?? '${entry.latitude}, ${entry.longitude}'}',
-              style: const TextStyle(fontStyle: FontStyle.italic),
-            ),
+        if (entry.description != null && entry.description!.isNotEmpty) ...[
+          Text(
+            entry.description!,
+            style: theme.bodyLarge,
           ),
+          const SizedBox(height: 16),
+        ],
 
-        if (entry.tags != null && entry.tags!.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Tags:', style: TextStyle(fontWeight: FontWeight.bold)),
-                Wrap(
-                  spacing: 8.0,
-                  children: entry.tags!.map((tag) {
-                    return Chip(label: Text(tag));
-                  }).toList(),
-                ),
-              ],
-            ),
+        if (entry.latitude != null && entry.longitude != null) ...[
+          Text(
+            'Location: ${entry.address ??
+                '${entry.latitude}, ${entry.longitude}'}',
+            style: theme.bodyMedium?.copyWith(fontStyle: FontStyle.italic),
           ),
+          const SizedBox(height: 16),
+        ],
+
+        if (entry.tags != null && entry.tags!.isNotEmpty) ...[
+          Text(
+            'Tags:',
+            style: theme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8.0,
+            runSpacing: -2.0,
+            children: entry.tags!.map((tag) {
+              return ChipThemeUtil.buildStyledChip(
+                label: tag,
+                labelStyle: theme.bodyMedium,
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 16),
+        ],
 
         if (entry.imageURLs != null && entry.imageURLs!.isNotEmpty)
-          _buildImageSection(entry.imageURLs!),
+          _buildImageSection(context, entry.imageURLs!),
 
         if (entry.videoURLs != null && entry.videoURLs!.isNotEmpty)
-          _buildVideoSection(entry.videoURLs!),
+          _buildVideoSection(context, entry),
       ],
     );
   }
 
-  Widget _buildImageSection(List<String> imageURLs) {
+  Widget _buildImageSection(BuildContext context, List<String> imageURLs) {
+    final theme = Theme
+        .of(context)
+        .textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Images:', style: TextStyle(fontWeight: FontWeight.bold)),
+        Text('Images:', style: theme.titleMedium),
         const SizedBox(height: 8),
         SizedBox(
           height: 100,
@@ -242,27 +257,84 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
     );
   }
 
-  Widget _buildVideoSection(List<String> videoURLs) {
+  Widget _buildVideoSection(BuildContext context, JournalEntry entry) {
+    final theme = Theme.of(context).textTheme;
+    final videos = entry.videoURLs ?? [];
+    final thumbs = entry.videoThumbnailURLs ?? [];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Videos:', style: TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: videoURLs.length,
-          itemBuilder: (context, index) {
-            final url = videoURLs[index];
-            return Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              constraints: const BoxConstraints(maxHeight: 200),
-              child: ChewieVideoPlayer(videoUrl: url),
-            );
-          },
+        Text('Videos:', style: theme.titleMedium),
+        SizedBox(
+          height: 100,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: videos.length,
+            itemBuilder: (context, index) {
+              final videoUrl = videos[index];
+              String? thumbUrl;
+              if (index < thumbs.length) {
+                thumbUrl = thumbs[index];
+              }
+
+              return Stack(
+                children: [
+                  GestureDetector(
+                    onTap: () => _showFullscreenVideo(context, videoUrl),
+                    child: Container(
+                      width: 100,
+                      height: 100,
+                      color: Colors.black12,
+                      margin: const EdgeInsets.only(right: 8.0),
+                      child: Stack(
+                        children: [
+                          // if we have a remote thumbnail
+                          if (thumbUrl == null || thumbUrl.isEmpty)
+                            const Center(
+                              child: Icon(Icons.play_circle_fill,
+                                  size: 50, color: Colors.white70),
+                            )
+                          else
+                              Image.network(
+                                thumbUrl,
+                                fit: BoxFit.cover,
+                                width: 100,
+                                height: 100,
+                                alignment: Alignment.center,
+                                errorBuilder: (context, error, stackTrace) => const Center(
+                                  child: Icon(Icons.error, color: Colors.red),
+                                ),
+                              ),
+                          const Center(
+                            child: Icon(Icons.play_circle_fill,
+                                size: 50, color: Colors.white70),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         ),
       ],
     );
   }
+
+  // Show Chewie in a dialog
+  void _showFullscreenVideo(BuildContext context, String videoUrl) {
+    showDialog(
+      context: context,
+      builder: (_) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          child: ChewieVideoPlayer(videoUrl: videoUrl),
+        );
+      },
+    );
+  }
 }
+
 

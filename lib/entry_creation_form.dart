@@ -1,9 +1,12 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:get_thumbnail_video/index.dart';
+import 'package:get_thumbnail_video/video_thumbnail.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:travellista/models/journal_entry.dart';
@@ -14,8 +17,7 @@ import 'package:travellista/shared_scaffold.dart';
 import 'package:travellista/util/storage_service.dart';
 import 'package:travellista/video_player_widget.dart';
 import 'package:travellista/location_picker_screen.dart';
-import 'package:video_player/video_player.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
+import 'package:travellista/util/chip_theme_util.dart';
 
 class EntryCreationForm extends StatefulWidget {
   final JournalEntry? existingEntry;
@@ -35,18 +37,18 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
   final _formKey = GlobalKey<FormState>();
   late final StorageService _storageService;
 
-  // Location fields
+  // Location
   String? _pickedAddress = "Seattle, Washington, United States";
   String? _pickedLocale;
   String? _pickedRegion;
   String? _pickedCountry;
   LatLng _pickedLocation = const LatLng(47.60621, -122.33207);
 
-  // Basic text controllers
+  // Basic text
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
-  // Tag fields
+  // Tags
   final TextEditingController _tagController = TextEditingController();
   List<String> _tags = [];
 
@@ -54,36 +56,34 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
   DateTime _selectedDate = DateTime.now();
   String? _monthName;
 
-  // Media
+  // Images
   List<File> _imageFiles = [];
-  List<File> _videoFiles = [];
   List<String> _oldImageURLs = [];
-  List<String> _oldVideoURLs = [];
   final List<String> _removedOldImageURLs = [];
+
+  // Videos
+  List<String> _oldVideoURLs = [];
+  List<String> _oldVideoThumbURLs = [];
   final List<String> _removedOldVideoURLs = [];
-
-  // Map to generate video thumbnails
-  final Map<File, Uint8List?> _videoThumbnails = {};
-
+  List<File> _newVideoFiles = [];
+  List<Uint8List?> _newVideoThumbBytes = [];
 
   // State
   bool _isSaving = false;
-  final ImagePicker _picker = ImagePicker();
   bool get _isEditMode => widget.existingEntry != null;
-
-  // We’ll check these to enable/disable the FAB
   bool get _isFormValid =>
       _titleController.text.trim().isNotEmpty &&
           _descriptionController.text.trim().isNotEmpty;
 
+  final ImagePicker _picker = ImagePicker();
+
   Future<Uint8List?> _generateThumbnail(File videoFile) async {
-    final uint8list = await VideoThumbnail.thumbnailData(
+    return await VideoThumbnail.thumbnailData(
       video: videoFile.path,
       imageFormat: ImageFormat.JPEG,
-      maxWidth: 200, // pick a reasonable size
+      maxWidth: 200,
       quality: 75,
     );
-    return uint8list;
   }
 
   @override
@@ -91,18 +91,15 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
     super.initState();
     _storageService = widget.storageOverride ?? StorageService();
 
-    // Listen to text changes for FAB build
     _titleController.addListener(() => setState(() {}));
     _descriptionController.addListener(() => setState(() {}));
 
-    // If editing, load existing data
     if (_isEditMode) {
       final existing = widget.existingEntry!;
+      // Load existing fields
       _titleController.text = existing.title ?? '';
       _descriptionController.text = existing.description ?? '';
-      if (existing.timestamp != null) {
-        _selectedDate = existing.timestamp!;
-      }
+      if (existing.timestamp != null) _selectedDate = existing.timestamp!;
       if (existing.latitude != null && existing.longitude != null) {
         _pickedLocation = LatLng(existing.latitude!, existing.longitude!);
       }
@@ -114,11 +111,17 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
       _tags = existing.tags ?? [];
       _tagController.text = _tags.join(', ');
 
+      // Existing images
       if (existing.imageURLs != null) {
         _oldImageURLs = List.from(existing.imageURLs!);
       }
+      // Existing videos
       if (existing.videoURLs != null) {
         _oldVideoURLs = List.from(existing.videoURLs!);
+      }
+      // Existing video thumbs
+      if (existing.videoThumbnailURLs != null) {
+        _oldVideoThumbURLs = List.from(existing.videoThumbnailURLs!);
       }
     } else {
       _monthName = DateFormat('MMMM').format(_selectedDate);
@@ -141,7 +144,6 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
               tooltip: 'Add Image',
               onPressed: _pickImage,
             ),
-            // Add video
             IconButton(
               icon: const Icon(Icons.videocam),
               tooltip: 'Add Video',
@@ -194,7 +196,7 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
   }
 
   // ---------------------------
-  // Floating Action Button Usage
+  // Floating Action Button
   // ---------------------------
   Widget _buildSaveFAB(String userID) {
     return FloatingActionButton(
@@ -225,7 +227,6 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
           : null,
     );
   }
-
   Widget _buildDescriptionField() {
     final theme = Theme.of(context).textTheme;
     return TextFormField(
@@ -323,13 +324,16 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
           spacing: 6.0,
           runSpacing: -4.0,
           children: _tags.map((tag) {
-            return Chip(
-              label: Text(
-                tag,
-                style: theme.bodyMedium,
-              ),
+            return ChipThemeUtil.buildStyledChip(
+              label: tag,
+              labelStyle: theme.bodyMedium,
+              onDeleted: () {
+                setState(() {
+                  _tags.remove(tag);
+                  _tagController.text = _tags.join(', ');
+                });
+              },
               deleteIcon: const Icon(Icons.close),
-              onDeleted: () => setState(() => _tags.remove(tag)),
             );
           }).toList(),
         ),
@@ -338,7 +342,7 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
   }
 
   // ---------------------------
-  // Image / Video UI Sections
+  // Image Sections (unchanged)
   // ---------------------------
   Widget _buildImageSection() {
     final theme = Theme.of(context).textTheme;
@@ -416,165 +420,7 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
     );
   }
 
-  Widget _buildVideoSection() {
-    final theme = Theme.of(context).textTheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Videos:', style: theme.titleLarge),
-        const SizedBox(height: 8),
-        if (_videoFiles.isEmpty && _oldVideoURLs.isEmpty)...[
-          const Align(
-              alignment: Alignment.centerLeft,
-              child: Text('No videos yet.', style: TextStyle(fontStyle: FontStyle.italic))
-          ),
-        ]
-        else ...[
-          if (_videoFiles.isNotEmpty) ...[
-            Text('New Videos:', style: theme.titleMedium),
-            const SizedBox(height: 8),
-            _buildNewVideosList(),
-            const SizedBox(height: 16),
-          ],
-          if (_oldVideoURLs.isNotEmpty) ...[
-            Text('Existing Videos:', style: theme.titleMedium),
-            const SizedBox(height: 8),
-            _buildExistingVideosList(),
-          ],
-        ],
-      ],
-    );
-  }
-
-  // Shows local (new) videos with thumbnail
-  Widget _buildNewVideosList() {
-    return SizedBox(
-      height: 100,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: _videoFiles.length,
-        itemBuilder: (context, index) {
-          final file = _videoFiles[index];
-          final thumbnailBytes = _videoThumbnails[file];
-          return Stack(
-            children: [
-              GestureDetector(
-                onTap: () => _showFullscreenVideo(file: file),
-                child: Container(
-                  width: 100,
-                  height: 100,
-                  margin: const EdgeInsets.only(right: 8.0),
-                  color: Colors.black12,
-                  child: Stack(
-                    children: [
-                      if (thumbnailBytes == null)
-                        const Center(
-                          child: Icon(Icons.videocam, size: 40, color: Colors.white70),
-                        )
-                      else
-                        Image.memory(
-                          thumbnailBytes,
-                          fit: BoxFit.cover,
-                          width: 100,
-                          height: 100,
-                        ),
-                      const Center(
-                        child: Icon(
-                          Icons.play_circle_fill,
-                          size: 50,
-                          color: Colors.white70,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 0,
-                right: 0,
-                child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.red),
-                  onPressed: () {
-                    setState(() => _videoFiles.removeAt(index));
-                  },
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  // Shows existing (old) video URLs with thumbnail
-  Widget _buildExistingVideosList() {
-    return SizedBox(
-      height: 100,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: _oldVideoURLs.length,
-        itemBuilder: (context, index) {
-          final url = _oldVideoURLs[index];
-          return Stack(
-            children: [
-              GestureDetector(
-                onTap: () => _showFullscreenVideo(url: url),
-                child: Container(
-                  width: 100,
-                  height: 100,
-                  margin: const EdgeInsets.only(right: 8.0),
-                  color: Colors.black12,
-                  child: const Stack(
-                    children: [
-                      Center(
-                        child: Icon(Icons.play_circle_fill,
-                            size: 50, color: Colors.white70),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Remove button
-              Positioned(
-                top: 0,
-                right: 0,
-                child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.red),
-                  onPressed: () {
-                    setState(() {
-                      _removedOldVideoURLs.add(url);
-                      _oldVideoURLs.removeAt(index);
-                    });
-                  },
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  // Chewie dialog container
-  void _showFullscreenVideo({File? file, String? url}) {
-    showDialog(
-      context: context,
-      builder: (_) {
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          child: SizedBox(
-            width: MediaQuery.of(context).size.width * 0.9,
-            height: MediaQuery.of(context).size.height * 0.5,
-            child: ChewieVideoPlayer(videoFile: file, videoUrl: url),
-          ),
-        );
-      },
-    );
-  }
-
-  // Removable thumbnail for images
-  Widget _buildRemovableThumbnail({
+    Widget _buildRemovableThumbnail({
     required Widget child,
     required VoidCallback onRemove,
   }) {
@@ -596,9 +442,210 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
     );
   }
 
-  // ---------------------------
-  // Picking Images & Videos
-  // ---------------------------
+  // ======================
+  // Video Sections
+  // ======================
+  Widget _buildVideoSection() {
+    final theme = Theme.of(context).textTheme;
+    final hasNoVideos = _newVideoFiles.isEmpty && _oldVideoURLs.isEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Videos:', style: theme.titleLarge),
+        const SizedBox(height: 8),
+        if (hasNoVideos)
+          const Align(
+              alignment: Alignment.centerLeft,
+              child: Text('No videos yet.', style: TextStyle(fontStyle: FontStyle.italic))
+          )
+        else ...[
+          if (_newVideoFiles.isNotEmpty) ...[
+            Text('New Videos:', style: theme.titleMedium),
+            const SizedBox(height: 8),
+            _buildNewVideosList(),
+            const SizedBox(height: 16),
+          ],
+          if (_oldVideoURLs.isNotEmpty) ...[
+            Text('Existing Videos:', style: theme.titleMedium),
+            const SizedBox(height: 8),
+            _buildExistingVideosList(),
+          ],
+        ],
+      ],
+    );
+  }
+
+  // NEW videos
+  Widget _buildNewVideosList() {
+    return SizedBox(
+      height: 100,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: _newVideoFiles.length,
+        itemBuilder: (context, index) {
+          final file = _newVideoFiles[index];
+          final thumbBytes = _newVideoThumbBytes[index];
+          return Stack(
+            children: [
+              GestureDetector(
+                onTap: () => _showFullscreenVideo(
+                  context,
+                  file: file, // local file
+                ),
+                child: Container(
+                  margin: const EdgeInsets.only(right: 8.0),
+                  width: 100,
+                  height: 100,
+                  color: Colors.black12,
+                  child: Stack(
+                    children: [
+                      if (thumbBytes == null)
+                        const Center(
+                          child: Icon(Icons.videocam, size: 40, color: Colors.white70),
+                        )
+                      else
+                        Image.memory(
+                          thumbBytes,
+                          fit: BoxFit.cover,
+                          width: 100,
+                          height: 100,
+                          alignment: Alignment.center,
+                        ),
+                      const Center(
+                        child: Icon(
+                          Icons.play_circle_fill,
+                          size: 50,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 0,
+                right: 0,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.red),
+                  onPressed: () {
+                    setState(() {
+                      _newVideoFiles.removeAt(index);
+                      _newVideoThumbBytes.removeAt(index);
+                    });
+                  },
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  // OLD existing videos
+  Widget _buildExistingVideosList() {
+    return SizedBox(
+      height: 100,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: _oldVideoURLs.length,
+        itemBuilder: (context, index) {
+          final videoUrl = _oldVideoURLs[index];
+          String? thumbUrl;
+          if (index < _oldVideoThumbURLs.length) {
+            thumbUrl = _oldVideoThumbURLs[index];
+          }
+          return Stack(
+            children: [
+              GestureDetector(
+                onTap: () => _showFullscreenVideo(
+                  context,
+                  videoUrl: videoUrl,
+                ),
+                child: Container(
+                  margin: const EdgeInsets.only(right: 8.0),
+                  width: 100,
+                  height: 100,
+                  color: Colors.black12,
+                  child: Stack(
+                    children: [
+                      if (thumbUrl == null || thumbUrl.isEmpty)
+                        const Center(
+                          child: Icon(
+                            Icons.play_circle_fill,
+                            size: 50,
+                            color: Colors.white70,
+                          ),
+                        )
+                      else
+                        Image.network(
+                          thumbUrl,
+                          fit: BoxFit.cover,
+                          width: 100,
+                          height: 100,
+                          alignment: Alignment.center,
+                          errorBuilder: (context, error, stackTrace) => const Center(
+                            child: Icon(Icons.error, color: Colors.red),
+                          ),
+                        ),
+                      const Center(
+                        child: Icon(
+                          Icons.play_circle_fill,
+                          size: 50,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 0,
+                right: 0,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.red),
+                  onPressed: () {
+                    setState(() {
+                      _removedOldVideoURLs.add(videoUrl);
+                      _oldVideoURLs.removeAt(index);
+                      if (index < _oldVideoThumbURLs.length) {
+                        _oldVideoThumbURLs.removeAt(index);
+                      }
+                    });
+                  },
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _showFullscreenVideo(
+      BuildContext context, {
+        File? file,
+        String? videoUrl,
+      }) {
+    showDialog(
+      context: context,
+      builder: (_) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          child: ChewieVideoPlayer(
+            videoFile: file,
+            videoUrl: videoUrl,
+          ),
+        );
+      },
+    );
+  }
+
+
+
+  // ======================
+  // IMAGE / VIDEO PICK
+  // ======================
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
@@ -612,21 +659,18 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
     final pickedFile = await _picker.pickVideo(source: ImageSource.gallery);
     if (pickedFile != null) {
       final file = File(pickedFile.path);
-      setState(() {
-        _videoFiles.add(file);
-        _videoThumbnails[file] = null;
-      });
-
       final thumb = await _generateThumbnail(file);
+
       setState(() {
-        _videoThumbnails[file] = thumb;
+        _newVideoFiles.add(file);
+        _newVideoThumbBytes.add(thumb);
       });
     }
   }
 
-  // ---------------------------
-  // Date Picker
-  // ---------------------------
+  // ======================
+  // DATE PICK
+  // ======================
   Future<void> _pickDate() async {
     final pickedDate = await showDatePicker(
       context: context,
@@ -642,9 +686,9 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
     }
   }
 
-  // ---------------------------
-  // Save / Update Logic
-  // ---------------------------
+  // ======================
+  // SAVE
+  // ======================
   Future<void> _saveEntry(String userID) async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isSaving = true);
@@ -652,15 +696,46 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
     try {
       // 1) Upload new images
       final newImageURLs = await _uploadNewImages();
-      // 2) Upload new videos
-      final newVideoURLs = await _uploadNewVideos();
+
+      // 2) Upload new videos & thumbs
+      final newVideoURLs = <String>[];
+      final newVideoThumbURLs = <String>[];
+
+      for (int i = 0; i < _newVideoFiles.length; i++) {
+        final videoFile = _newVideoFiles[i];
+        // Upload the video
+        final ext = _getFileExtension(videoFile.path);
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}$ext';
+        final videoURL = await _storageService.uploadFile(
+          videoFile,
+          'videos/$fileName',
+        );
+        newVideoURLs.add(videoURL);
+
+        // Upload the thumbnail if available
+        final thumbBytes = _newVideoThumbBytes[i];
+        if (thumbBytes != null) {
+          final thumbFile = await _saveBytesToTempFile(thumbBytes);
+          final thumbUploadName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+          final uploadedThumbURL = await _storageService.uploadFile(
+            thumbFile,
+            'thumbnails/$thumbUploadName',
+          );
+          await thumbFile.delete();
+          newVideoThumbURLs.add(uploadedThumbURL);
+        } else {
+          newVideoThumbURLs.add('');
+        }
+      }
+
       // 3) Remove old media
       await _removeOldMedia();
-      // 4) Combine old + new
-      final finalImageURLs = [..._oldImageURLs, ...newImageURLs];
-      final finalVideoURLs = [..._oldVideoURLs, ...newVideoURLs];
 
-      // 5) Parse text field tags
+      // 4) Combine old + new videos (and thumbs)
+      final finalVideoURLs = [..._oldVideoURLs, ...newVideoURLs];
+      final finalVideoThumbs = [..._oldVideoThumbURLs, ...newVideoThumbURLs];
+
+      // 5) Parse tags
       final typedTags = _tagController.text
           .split(',')
           .map((t) => t.trim())
@@ -668,10 +743,16 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
           .toList();
       final finalTags = {..._tags, ...typedTags}.toList();
 
-      // 6) Build the JournalEntry
+      // 6) Build final lists
+      final finalImageURLs = [
+        ..._oldImageURLs,
+        ...newImageURLs,
+      ];
+
+      // 7) Create the updated JournalEntry
       final updatedEntry = JournalEntry(
         entryID: widget.existingEntry?.entryID,
-        userID: widget.existingEntry?.userID ?? 'demoUser',
+        userID: widget.existingEntry?.userID ?? userID,
         title: _titleController.text,
         description: _descriptionController.text,
         timestamp: _selectedDate,
@@ -680,6 +761,7 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
         address: _pickedAddress,
         imageURLs: finalImageURLs,
         videoURLs: finalVideoURLs,
+        videoThumbnailURLs: finalVideoThumbs,
         localeName: _pickedLocale,
         regionName: _pickedRegion,
         countryName: _pickedCountry,
@@ -687,8 +769,8 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
         monthName: _monthName,
       );
 
+      // 8) Save via provider
       final provider = context.read<JournalEntryProvider>();
-
       if (_isEditMode) {
         await provider.updateEntry(updatedEntry.entryID!, updatedEntry);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -709,7 +791,7 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
       setState(() => _isSaving = false);
     }
 
-    // Navigate back or to home
+    // Navigate
     if (_isEditMode) {
       if (mounted) context.pop();
     } else {
@@ -717,9 +799,9 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
     }
   }
 
-  // ---------------------------
-  // Helper: Upload / Remove
-  // ---------------------------
+  // ======================
+  // Upload / Remove Helpers
+  // ======================
   Future<List<String>> _uploadNewImages() async {
     final newImageURLs = <String>[];
     for (File imageFile in _imageFiles) {
@@ -734,28 +816,15 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
     return newImageURLs;
   }
 
-  Future<List<String>> _uploadNewVideos() async {
-    final newVideoURLs = <String>[];
-    for (File videoFile in _videoFiles) {
-      final ext = _getFileExtension(videoFile.path);
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}$ext';
-      final videoURL = await _storageService.uploadFile(
-        videoFile,
-        'videos/$fileName',
-      );
-      newVideoURLs.add(videoURL);
-    }
-    return newVideoURLs;
-  }
-
   Future<void> _removeOldMedia() async {
+    // remove old images
     for (final url in _removedOldImageURLs) {
       await _storageService.deleteFileByUrl(url);
     }
+    // remove old videos
     for (final url in _removedOldVideoURLs) {
       await _storageService.deleteFileByUrl(url);
     }
-    // Exclude from final arrays
     _oldImageURLs.removeWhere((url) => _removedOldImageURLs.contains(url));
     _oldVideoURLs.removeWhere((url) => _removedOldVideoURLs.contains(url));
   }
@@ -764,5 +833,13 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
     final dotIndex = filePath.lastIndexOf('.');
     if (dotIndex == -1) return '';
     return filePath.substring(dotIndex).toLowerCase();
+  }
+
+  Future<File> _saveBytesToTempFile(Uint8List bytes) async {
+    final dir = await getTemporaryDirectory();
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final tempFile = File('${dir.path}/$fileName');
+    await tempFile.writeAsBytes(bytes);
+    return tempFile;
   }
 }

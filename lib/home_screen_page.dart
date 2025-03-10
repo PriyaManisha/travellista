@@ -57,16 +57,22 @@ class _HomeScreenPageState extends State<HomeScreenPage> {
   }
 
   Widget _buildNoEntriesYetScaffold() {
-    return const SharedScaffold(
+    final theme = Theme.of(context).textTheme;
+    return SharedScaffold(
       title: 'Travellista',
       selectedIndex: 0,
       body: Center(
-        child: Text('No journal entries entered yet.'),
+        child: Text(
+          'No journal entries entered yet.',
+          style: theme.bodyMedium?.copyWith(fontStyle: FontStyle.italic),
+        ),
       ),
     );
   }
 
   Widget _buildNoResultsScaffold() {
+    final theme = Theme.of(context).textTheme;
+
     return SharedScaffold(
       titleWidget: EntrySearchBar(
         title: 'Travellista',
@@ -83,11 +89,18 @@ class _HomeScreenPageState extends State<HomeScreenPage> {
         },
       ),
       selectedIndex: 0,
-      body: const Center(child: Text('No entries match your search.')),
+      body: Center(
+        child: Text(
+          'No entries match your search.',
+          style: theme.bodyMedium?.copyWith(fontStyle: FontStyle.italic),
+        ),
+      ),
     );
   }
 
   Widget _buildMainScaffold(List<MapEntry<String, List<JournalEntry>>> sortedGroups) {
+    final theme = Theme.of(context).textTheme;
+
     return SharedScaffold(
       titleWidget: EntrySearchBar(
         title: 'Travellista',
@@ -110,7 +123,10 @@ class _HomeScreenPageState extends State<HomeScreenPage> {
           final entriesForGroup = group.value;
           return ExpansionTile(
             key: UniqueKey(),
-            title: Text(locationKey),
+            title: Text(
+              locationKey,
+              style: theme.bodyLarge,
+            ),
             leading: const Icon(Icons.location_on),
             trailing: const Icon(Icons.keyboard_arrow_down),
             textColor: Theme.of(context).colorScheme.primary,
