@@ -118,22 +118,34 @@ class _HomeScreenPageState extends State<HomeScreenPage> {
       ),
       selectedIndex: 0,
       body: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical:8.0),
         children: sortedGroups.map((group) {
           final locationKey = group.key;
           final entriesForGroup = group.value;
-          return ExpansionTile(
-            key: UniqueKey(),
-            title: Text(
-              locationKey,
-              style: theme.bodyLarge,
-            ),
-            leading: const Icon(Icons.location_on),
-            trailing: const Icon(Icons.keyboard_arrow_down),
-            textColor: Theme.of(context).colorScheme.primary,
-            iconColor: Theme.of(context).colorScheme.primary,
-            collapsedIconColor: Colors.grey,
-            childrenPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            children: entriesForGroup.map((entry) => EntryCard(entry: entry)).toList(),
+          return Card(
+            child:Container(
+              decoration:const BoxDecoration(
+                color:Colors.white,
+                boxShadow:[BoxShadow(
+                  color:Colors.black12,
+                  offset:Offset(2,3)
+                )]
+              ),
+              child:ExpansionTile(
+                key: UniqueKey(),
+                title: Text(
+                  locationKey,
+                  style: theme.bodyLarge,
+                ),
+                leading: const Icon(Icons.location_on),
+                trailing: const Icon(Icons.keyboard_arrow_down),
+                textColor: Theme.of(context).colorScheme.primary,
+                iconColor: Theme.of(context).colorScheme.primary,
+                collapsedIconColor: Colors.grey,
+                childrenPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                children: entriesForGroup.map((entry) => EntryCard(entry: entry)).toList(),
+              )
+            )
           );
         }).toList(),
       ),
