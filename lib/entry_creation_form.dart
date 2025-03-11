@@ -39,9 +39,9 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
 
   // Location
   String? _pickedAddress = "Seattle, Washington, United States";
-  String? _pickedLocale;
-  String? _pickedRegion;
-  String? _pickedCountry;
+  String? _pickedLocale = "Seattle";
+  String? _pickedRegion = "Washington";
+  String? _pickedCountry = "United States";
   LatLng _pickedLocation = const LatLng(47.60621, -122.33207);
 
   // Basic text
@@ -642,7 +642,9 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
   // IMAGE / VIDEO PICK
   // ======================
   Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    final source = await _showMediaSourceDialog('Image');
+    if (source == null) return;
+    final pickedFile = await _picker.pickImage(source: source);
     if (pickedFile != null) {
       setState(() {
         _imageFiles.add(File(pickedFile.path));
@@ -651,7 +653,9 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
   }
 
   Future<void> _pickVideo() async {
-    final pickedFile = await _picker.pickVideo(source: ImageSource.gallery);
+    final source = await _showMediaSourceDialog('Video');
+    if (source == null) return;
+    final pickedFile = await _picker.pickVideo(source: source);
     if (pickedFile != null) {
       final file = File(pickedFile.path);
       final thumb = await _generateThumbnail(file);
@@ -661,6 +665,29 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
         _newVideoThumbBytes.add(thumb);
       });
     }
+  }
+
+  Future<ImageSource?> _showMediaSourceDialog(String mediaType) async {
+    return showDialog<ImageSource>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Select $mediaType Source'),
+        actions: [
+          TextButton(
+            onPressed: () => context.pop(ImageSource.camera),
+            child: const Text('Camera'),
+          ),
+          TextButton(
+            onPressed: () => context.pop(ImageSource.gallery),
+            child: const Text('Gallery'),
+          ),
+          TextButton(
+            onPressed: () => context.pop(null),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
   }
 
   // ======================

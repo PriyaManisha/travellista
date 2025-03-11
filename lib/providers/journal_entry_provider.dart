@@ -46,6 +46,8 @@ class JournalEntryProvider extends ChangeNotifier {
         .collection('journal_entries')
         .add(entry.toMap());
 
+    await docRef.update({'entryID': docRef.id});
+
     // Update local state with the newly created doc’s ID
     final newEntry = entry.copyWith(entryID: docRef.id);
     _entries.add(newEntry);
