@@ -34,22 +34,98 @@ class NavBar extends StatelessWidget {
       showSelectedLabels: true,
       selectedItemColor: Theme.of(context).colorScheme.primary,
       //unselectedItemColor: Theme.of(context).colorScheme.primary,
-      items: const [
+      items: [
         BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Home',
+          icon: Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              boxShadow: [BoxShadow(
+                color: Colors.black54,
+                blurRadius:4,
+                offset: Offset(4,4)
+              )]
+            ),
+            child: const SizedBox(
+              height:50,
+              width:50,
+              child:Column(
+                children:[
+                  Icon(Icons.home),
+                  Text("Home")
+                ]
+              )
+            )
+          ),
+          label: ' ',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.add),
-          label: 'Create',
+          icon: Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              boxShadow: [ BoxShadow(
+                color: Colors.black54,
+                blurRadius:4,
+                offset: Offset(2,4)
+              )]
+            ),
+            child:const SizedBox(
+              height:50,
+              width:50,
+              child:Column(
+                children:[
+                  Icon(Icons.add),
+                  Text("Add")
+                ]
+              )
+            )
+          ),
+          label: ' ',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.map),
-          label: 'Map',
+          icon: Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              boxShadow: [BoxShadow(
+                color: Colors.black54,
+                blurRadius:4,
+                offset: Offset(-2,4)
+              )]
+            ),
+            child:const SizedBox(
+              height:50,
+              width:50,
+              child:Column(
+                children:[
+                  Icon(Icons.map),
+                  Text("Map")
+                ]
+              )
+            )
+          ),
+          label: ' ',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: 'Profile',
+          icon: Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              boxShadow: [BoxShadow(
+                color: Colors.black54,
+                blurRadius:4,
+                offset: Offset(-4,4)
+              )]
+            ),
+            child:const SizedBox(
+              height:50,
+              width:50,
+              child: Column(
+                children:[
+                  Icon(Icons.person),
+                  Text("Profile")
+                ]
+              )
+            )
+          ),
+          label: ' ',
         ),
       ],
     );
