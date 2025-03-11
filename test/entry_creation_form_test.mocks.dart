@@ -3,17 +3,20 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i4;
-import 'dart:io' as _i9;
-import 'dart:ui' as _i5;
+import 'dart:async' as _i5;
+import 'dart:io' as _i10;
+import 'dart:ui' as _i6;
 
+import 'package:image_picker/image_picker.dart' as _i12;
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart'
+    as _i2;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:mockito/src/dummies.dart' as _i10;
-import 'package:travellista/models/journal_entry.dart' as _i3;
-import 'package:travellista/models/profile.dart' as _i7;
-import 'package:travellista/providers/journal_entry_provider.dart' as _i2;
-import 'package:travellista/providers/profile_provider.dart' as _i6;
-import 'package:travellista/util/storage_service.dart' as _i8;
+import 'package:mockito/src/dummies.dart' as _i11;
+import 'package:travellista/models/journal_entry.dart' as _i4;
+import 'package:travellista/models/profile.dart' as _i8;
+import 'package:travellista/providers/journal_entry_provider.dart' as _i3;
+import 'package:travellista/providers/profile_provider.dart' as _i7;
+import 'package:travellista/util/storage_service.dart' as _i9;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -29,22 +32,28 @@ import 'package:travellista/util/storage_service.dart' as _i8;
 // ignore_for_file: camel_case_types
 // ignore_for_file: subtype_of_sealed_class
 
+class _FakeLostDataResponse_0 extends _i1.SmartFake
+    implements _i2.LostDataResponse {
+  _FakeLostDataResponse_0(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
 /// A class which mocks [JournalEntryProvider].
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockJournalEntryProvider extends _i1.Mock
-    implements _i2.JournalEntryProvider {
+    implements _i3.JournalEntryProvider {
   MockJournalEntryProvider() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  List<_i3.JournalEntry> get entries =>
+  List<_i4.JournalEntry> get entries =>
       (super.noSuchMethod(
             Invocation.getter(#entries),
-            returnValue: <_i3.JournalEntry>[],
+            returnValue: <_i4.JournalEntry>[],
           )
-          as List<_i3.JournalEntry>);
+          as List<_i4.JournalEntry>);
 
   @override
   bool get isLoading =>
@@ -57,52 +66,52 @@ class MockJournalEntryProvider extends _i1.Mock
           as bool);
 
   @override
-  _i4.Future<void> fetchEntriesForUser(String? userID) =>
+  _i5.Future<void> fetchEntriesForUser(String? userID) =>
       (super.noSuchMethod(
             Invocation.method(#fetchEntriesForUser, [userID]),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i5.Future<void>);
 
   @override
-  _i4.Future<void> addEntry(_i3.JournalEntry? entry) =>
+  _i5.Future<void> addEntry(_i4.JournalEntry? entry) =>
       (super.noSuchMethod(
             Invocation.method(#addEntry, [entry]),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i5.Future<void>);
 
   @override
-  _i4.Future<void> updateEntry(
+  _i5.Future<void> updateEntry(
     String? entryID,
-    _i3.JournalEntry? updatedEntry,
+    _i4.JournalEntry? updatedEntry,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#updateEntry, [entryID, updatedEntry]),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i5.Future<void>);
 
   @override
-  _i4.Future<void> deleteEntry(String? entryID) =>
+  _i5.Future<void> deleteEntry(String? entryID) =>
       (super.noSuchMethod(
             Invocation.method(#deleteEntry, [entryID]),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i5.Future<void>);
 
   @override
-  void addListener(_i5.VoidCallback? listener) => super.noSuchMethod(
+  void addListener(_i6.VoidCallback? listener) => super.noSuchMethod(
     Invocation.method(#addListener, [listener]),
     returnValueForMissingStub: null,
   );
 
   @override
-  void removeListener(_i5.VoidCallback? listener) => super.noSuchMethod(
+  void removeListener(_i6.VoidCallback? listener) => super.noSuchMethod(
     Invocation.method(#removeListener, [listener]),
     returnValueForMissingStub: null,
   );
@@ -123,7 +132,7 @@ class MockJournalEntryProvider extends _i1.Mock
 /// A class which mocks [ProfileProvider].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockProfileProvider extends _i1.Mock implements _i6.ProfileProvider {
+class MockProfileProvider extends _i1.Mock implements _i7.ProfileProvider {
   MockProfileProvider() {
     _i1.throwOnMissingStub(this);
   }
@@ -139,31 +148,31 @@ class MockProfileProvider extends _i1.Mock implements _i6.ProfileProvider {
           as bool);
 
   @override
-  _i4.Future<void> fetchProfile(String? userID) =>
+  _i5.Future<void> fetchProfile(String? userID) =>
       (super.noSuchMethod(
             Invocation.method(#fetchProfile, [userID]),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i5.Future<void>);
 
   @override
-  _i4.Future<void> saveProfile(_i7.Profile? profile) =>
+  _i5.Future<void> saveProfile(_i8.Profile? profile) =>
       (super.noSuchMethod(
             Invocation.method(#saveProfile, [profile]),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i5.Future<void>);
 
   @override
-  void addListener(_i5.VoidCallback? listener) => super.noSuchMethod(
+  void addListener(_i6.VoidCallback? listener) => super.noSuchMethod(
     Invocation.method(#addListener, [listener]),
     returnValueForMissingStub: null,
   );
 
   @override
-  void removeListener(_i5.VoidCallback? listener) => super.noSuchMethod(
+  void removeListener(_i6.VoidCallback? listener) => super.noSuchMethod(
     Invocation.method(#removeListener, [listener]),
     returnValueForMissingStub: null,
   );
@@ -184,30 +193,156 @@ class MockProfileProvider extends _i1.Mock implements _i6.ProfileProvider {
 /// A class which mocks [StorageService].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockStorageService extends _i1.Mock implements _i8.StorageService {
+class MockStorageService extends _i1.Mock implements _i9.StorageService {
   MockStorageService() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i4.Future<String> uploadFile(_i9.File? file, String? path) =>
+  _i5.Future<String> uploadFile(_i10.File? file, String? path) =>
       (super.noSuchMethod(
             Invocation.method(#uploadFile, [file, path]),
-            returnValue: _i4.Future<String>.value(
-              _i10.dummyValue<String>(
+            returnValue: _i5.Future<String>.value(
+              _i11.dummyValue<String>(
                 this,
                 Invocation.method(#uploadFile, [file, path]),
               ),
             ),
           )
-          as _i4.Future<String>);
+          as _i5.Future<String>);
 
   @override
-  _i4.Future<void> deleteFileByUrl(String? url) =>
+  _i5.Future<void> deleteFileByUrl(String? url) =>
       (super.noSuchMethod(
             Invocation.method(#deleteFileByUrl, [url]),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
           )
-          as _i4.Future<void>);
+          as _i5.Future<void>);
+}
+
+/// A class which mocks [ImagePicker].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockImagePicker extends _i1.Mock implements _i12.ImagePicker {
+  MockImagePicker() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i5.Future<_i2.XFile?> pickImage({
+    required _i2.ImageSource? source,
+    double? maxWidth,
+    double? maxHeight,
+    int? imageQuality,
+    _i2.CameraDevice? preferredCameraDevice = _i2.CameraDevice.rear,
+    bool? requestFullMetadata = true,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#pickImage, [], {
+              #source: source,
+              #maxWidth: maxWidth,
+              #maxHeight: maxHeight,
+              #imageQuality: imageQuality,
+              #preferredCameraDevice: preferredCameraDevice,
+              #requestFullMetadata: requestFullMetadata,
+            }),
+            returnValue: _i5.Future<_i2.XFile?>.value(),
+          )
+          as _i5.Future<_i2.XFile?>);
+
+  @override
+  _i5.Future<List<_i2.XFile>> pickMultiImage({
+    double? maxWidth,
+    double? maxHeight,
+    int? imageQuality,
+    int? limit,
+    bool? requestFullMetadata = true,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#pickMultiImage, [], {
+              #maxWidth: maxWidth,
+              #maxHeight: maxHeight,
+              #imageQuality: imageQuality,
+              #limit: limit,
+              #requestFullMetadata: requestFullMetadata,
+            }),
+            returnValue: _i5.Future<List<_i2.XFile>>.value(<_i2.XFile>[]),
+          )
+          as _i5.Future<List<_i2.XFile>>);
+
+  @override
+  _i5.Future<_i2.XFile?> pickMedia({
+    double? maxWidth,
+    double? maxHeight,
+    int? imageQuality,
+    bool? requestFullMetadata = true,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#pickMedia, [], {
+              #maxWidth: maxWidth,
+              #maxHeight: maxHeight,
+              #imageQuality: imageQuality,
+              #requestFullMetadata: requestFullMetadata,
+            }),
+            returnValue: _i5.Future<_i2.XFile?>.value(),
+          )
+          as _i5.Future<_i2.XFile?>);
+
+  @override
+  _i5.Future<List<_i2.XFile>> pickMultipleMedia({
+    double? maxWidth,
+    double? maxHeight,
+    int? imageQuality,
+    int? limit,
+    bool? requestFullMetadata = true,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#pickMultipleMedia, [], {
+              #maxWidth: maxWidth,
+              #maxHeight: maxHeight,
+              #imageQuality: imageQuality,
+              #limit: limit,
+              #requestFullMetadata: requestFullMetadata,
+            }),
+            returnValue: _i5.Future<List<_i2.XFile>>.value(<_i2.XFile>[]),
+          )
+          as _i5.Future<List<_i2.XFile>>);
+
+  @override
+  _i5.Future<_i2.XFile?> pickVideo({
+    required _i2.ImageSource? source,
+    _i2.CameraDevice? preferredCameraDevice = _i2.CameraDevice.rear,
+    Duration? maxDuration,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#pickVideo, [], {
+              #source: source,
+              #preferredCameraDevice: preferredCameraDevice,
+              #maxDuration: maxDuration,
+            }),
+            returnValue: _i5.Future<_i2.XFile?>.value(),
+          )
+          as _i5.Future<_i2.XFile?>);
+
+  @override
+  _i5.Future<_i2.LostDataResponse> retrieveLostData() =>
+      (super.noSuchMethod(
+            Invocation.method(#retrieveLostData, []),
+            returnValue: _i5.Future<_i2.LostDataResponse>.value(
+              _FakeLostDataResponse_0(
+                this,
+                Invocation.method(#retrieveLostData, []),
+              ),
+            ),
+          )
+          as _i5.Future<_i2.LostDataResponse>);
+
+  @override
+  bool supportsImageSource(_i2.ImageSource? source) =>
+      (super.noSuchMethod(
+            Invocation.method(#supportsImageSource, [source]),
+            returnValue: false,
+          )
+          as bool);
 }

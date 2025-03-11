@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:travellista/entry_creation_form.dart';
 import 'package:mockito/annotations.dart';
@@ -18,6 +19,7 @@ import 'fakes/fake_routers.dart';
   JournalEntryProvider,
   ProfileProvider,
   StorageService,
+  ImagePicker,
 ])
 
 main() {
@@ -91,6 +93,77 @@ main() {
       expect(newEntry.description, 'A quick description');
       expect(newEntry.userID, 'demoUser');
       expect(newEntry.tags, containsAll(['beach', 'hiking', 'summer']));
+    });
+
+    testWidgets('Adds image and video via picker', (tester) async {
+      // setup / given / arrange : mock provider, storage service, image picker
+      final mockJournalProvider = MockJournalEntryProvider();
+      final mockProfileProvider = MockProfileProvider();
+      final mockStorage = MockStorageService();
+      final mockImagePicker = MockImagePicker();
+
+      when(mockProfileProvider.isLoading).thenReturn(false);
+      when(mockProfileProvider.profile).thenReturn(
+        Profile(userID: 'demoUser', displayName: 'Demo Name', email: 'demo@demo.com'),
+      );
+
+      when(mockStorage.uploadFile(any, any)).thenAnswer((invocation) async {
+        final path = invocation.positionalArguments[1] as String;
+        if (path.startsWith('images/')) return 'https://fake.com/image.png';
+        if (path.startsWith('videos/')) return 'https://fake.com/video.mp4';
+        if (path.startsWith('thumbnails/')) return 'https://fake.com/thumb.jpg';
+        return 'https://fake.com/default.png';
+      });
+
+      when(mockImagePicker.pickImage(source: ImageSource.gallery))
+          .thenAnswer((_) async => XFile('/fake/path/image.png'));
+      when(mockImagePicker.pickVideo(source: ImageSource.gallery))
+          .thenAnswer((_) async => XFile('/fake/path/video.mp4'));
+
+      final router = fakeNewEntryRouter(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider<ProfileProvider>.value(value: mockProfileProvider),
+            ChangeNotifierProvider<JournalEntryProvider>.value(value: mockJournalProvider),
+            Provider<StorageService>.value(value: mockStorage),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: EntryCreationForm(
+                storageOverride: mockStorage,
+                pickerOverride: mockImagePicker,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Put the widget on the virtual screen
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpAndSettle();
+
+      // Act: Add an image
+      final imageButton = find.byIcon(Icons.photo);
+      await tester.tap(imageButton);
+      await tester.pumpAndSettle();
+
+      final galleryOption = find.textContaining('Gallery');
+      await tester.tap(galleryOption);
+      await tester.pumpAndSettle();
+
+      // Verify: image picker was called
+      verify(mockImagePicker.pickImage(source: ImageSource.gallery)).called(1);
+
+      // Act: Add a video
+      final videoButton = find.byIcon(Icons.videocam);
+      await tester.tap(videoButton);
+      await tester.pumpAndSettle();
+
+      await tester.tap(galleryOption);
+      await tester.pumpAndSettle();
+
+      // Verify: video picker was called
+      verify(mockImagePicker.pickVideo(source: ImageSource.gallery)).called(1);
     });
   });
 

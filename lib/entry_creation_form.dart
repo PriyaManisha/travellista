@@ -22,11 +22,13 @@ import 'package:travellista/util/chip_theme_util.dart';
 class EntryCreationForm extends StatefulWidget {
   final JournalEntry? existingEntry;
   final StorageService? storageOverride;
+  final ImagePicker? pickerOverride;
 
   const EntryCreationForm({
     super.key,
     this.existingEntry,
     this.storageOverride,
+    this.pickerOverride,
   });
 
   @override
@@ -36,6 +38,7 @@ class EntryCreationForm extends StatefulWidget {
 class _EntryCreationFormState extends State<EntryCreationForm> {
   final _formKey = GlobalKey<FormState>();
   late final StorageService _storageService;
+  late final ImagePicker _picker;
 
   // Location
   String? _pickedAddress = "Seattle, Washington, United States";
@@ -74,8 +77,6 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
   bool get _isFormValid =>
       _titleController.text.trim().isNotEmpty;
 
-  final ImagePicker _picker = ImagePicker();
-
   Future<Uint8List?> _generateThumbnail(File videoFile) async {
     return await VideoThumbnail.thumbnailData(
       video: videoFile.path,
@@ -89,7 +90,7 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
   void initState() {
     super.initState();
     _storageService = widget.storageOverride ?? StorageService();
-
+    _picker = widget.pickerOverride ?? ImagePicker();
     _titleController.addListener(() => setState(() {}));
 
     if (_isEditMode) {
