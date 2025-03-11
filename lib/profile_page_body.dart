@@ -215,7 +215,10 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
           OutlinedButton(
             key: const Key('dialogCancelButton'),
             onPressed: () {
-              setState(() => _isEditing = false);
+              setState(() {
+                _isEditing = false;
+                _photoUrl = context.read<ProfileProvider>().profile?.photoUrl;
+              });
             },
             child: const Text("Cancel"),
           ),
