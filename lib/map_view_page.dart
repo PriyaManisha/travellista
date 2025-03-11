@@ -92,13 +92,10 @@ class _MapViewPageState extends State<MapViewPage> {
         behavior: HitTestBehavior.translucent,
         onTap: () => FocusScope.of(context).unfocus(),
         child: GoogleMap(
-          onMapCreated: (controller) async {
-            _mapController.complete(controller);
-            if (_overallBounds != null) {
-              await Future.delayed(const Duration(milliseconds: 200));
-              controller.animateCamera(
-                CameraUpdate.newLatLngBounds(_overallBounds!, 60),
-              );
+          onMapCreated: (GoogleMapController controller) {
+            // Only complete once
+            if (!_mapController.isCompleted) {
+              _mapController.complete(controller);
             }
           },
           onTap: (LatLng position) {

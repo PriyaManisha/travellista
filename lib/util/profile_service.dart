@@ -23,5 +23,12 @@ class ProfileService {
       rethrow;
     }
   }
+
+  Stream<Profile?> streamProfile(String uid) {
+    return profilesCollection.doc(uid).snapshots().map((docSnap) {
+      if (!docSnap.exists) return null;
+      return Profile.fromMap(docSnap.data() as Map<String, dynamic>, docSnap.id);
+    });
+  }
 }
 

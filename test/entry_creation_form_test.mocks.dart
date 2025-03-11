@@ -148,13 +148,10 @@ class MockProfileProvider extends _i1.Mock implements _i7.ProfileProvider {
           as bool);
 
   @override
-  _i5.Future<void> fetchProfile(String? userID) =>
-      (super.noSuchMethod(
-            Invocation.method(#fetchProfile, [userID]),
-            returnValue: _i5.Future<void>.value(),
-            returnValueForMissingStub: _i5.Future<void>.value(),
-          )
-          as _i5.Future<void>);
+  void listenToProfile(String? userID) => super.noSuchMethod(
+    Invocation.method(#listenToProfile, [userID]),
+    returnValueForMissingStub: null,
+  );
 
   @override
   _i5.Future<void> saveProfile(_i8.Profile? profile) =>
@@ -166,6 +163,12 @@ class MockProfileProvider extends _i1.Mock implements _i7.ProfileProvider {
           as _i5.Future<void>);
 
   @override
+  void dispose() => super.noSuchMethod(
+    Invocation.method(#dispose, []),
+    returnValueForMissingStub: null,
+  );
+
+  @override
   void addListener(_i6.VoidCallback? listener) => super.noSuchMethod(
     Invocation.method(#addListener, [listener]),
     returnValueForMissingStub: null,
@@ -174,12 +177,6 @@ class MockProfileProvider extends _i1.Mock implements _i7.ProfileProvider {
   @override
   void removeListener(_i6.VoidCallback? listener) => super.noSuchMethod(
     Invocation.method(#removeListener, [listener]),
-    returnValueForMissingStub: null,
-  );
-
-  @override
-  void dispose() => super.noSuchMethod(
-    Invocation.method(#dispose, []),
     returnValueForMissingStub: null,
   );
 

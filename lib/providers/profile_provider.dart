@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:travellista/models/profile.dart';
 import 'package:travellista/util/profile_service.dart';
@@ -11,17 +12,23 @@ class ProfileProvider extends ChangeNotifier {
   Profile? _profile;
   Profile? get profile => _profile;
 
-  Future<void> fetchProfile(String userID) async {
-    _isLoading = true;
-    try {
-      final fetched = await _profileService.getProfile(userID);
-      _profile = fetched;
-    } catch (e) {
-      // handle error or rethrow
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+  StreamSubscription<Profile?>? _profileSubscription;
+
+  void listenToProfile(String userID) {
+    _profileSubscription?.cancel();
+
+    _profileSubscription = _profileService.streamProfile(userID).listen(
+          (profileData) {
+        _profile = profileData;
+        _isLoading = false;
+        notifyListeners();
+      },
+      onError: (error) {
+        if (kDebugMode) print("streamProfile error: $error");
+        _isLoading = false;
+        notifyListeners();
+      },
+    );
   }
 
   Future<void> saveProfile(Profile profile) async {
@@ -29,7 +36,6 @@ class ProfileProvider extends ChangeNotifier {
     notifyListeners();
     try {
       await _profileService.setProfile(profile);
-      _profile = profile;
     } catch (e) {
       if (kDebugMode) {
         print("Error saving profile: $e");
@@ -38,5 +44,12 @@ class ProfileProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  @override
+  void dispose() {
+    // Cancel subscription to avoid memory leaks
+    _profileSubscription?.cancel();
+    super.dispose();
   }
 }

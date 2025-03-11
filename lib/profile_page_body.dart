@@ -32,7 +32,7 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
     super.initState();
     _storageService = widget.storageOverride ?? StorageService();
     // using "demoUser" for now:
-    context.read<ProfileProvider>().fetchProfile("demoUser");
+    context.read<ProfileProvider>().listenToProfile("demoUser");
   }
 
   @override
