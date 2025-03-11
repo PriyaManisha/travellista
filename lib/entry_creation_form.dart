@@ -199,7 +199,7 @@ class _EntryCreationFormState extends State<EntryCreationForm> {
   Widget _buildSaveFAB(String userID) {
     return FloatingActionButton(
       onPressed: _isFormValid ? () => _saveEntry(userID) : null,
-      backgroundColor: _isFormValid ? Theme.of(context).primaryColor : Colors.grey,
+      backgroundColor: _isFormValid ? const Color(0xFF7E57C2) : Colors.grey,
       child: Icon(_isEditMode ? Icons.check : Icons.save),
     );
   }
