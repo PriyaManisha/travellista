@@ -25,6 +25,7 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
   String _displayName = "";
   String _email = "";
   String? _photoUrl;
+  String? _pendingRemovalUrl;
 
   @override
   void initState() {
@@ -130,7 +131,7 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
             CircleAvatar(
               radius: 40,
               backgroundImage: (_photoUrl != null && _photoUrl!.isNotEmpty)
-                  ? NetworkImage(_photoUrl!)
+                  ? NetworkImage("$_photoUrl&t=${DateTime.now().millisecondsSinceEpoch}")
                   : null,
               child: (_photoUrl == null || _photoUrl!.isEmpty)
                   ? const Icon(Icons.person, size: 40)
@@ -143,10 +144,8 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
                 child: IconButton(
                   icon: const Icon(Icons.close, size: 18, color: Colors.red),
                   onPressed: () async {
-                    if (_photoUrl != null) {
-                      await _storageService.deleteFileByUrl(_photoUrl!);
-                    }
                     setState(() {
+                      _pendingRemovalUrl = _photoUrl;
                       _photoUrl = null;
                     });
                   },
@@ -218,6 +217,7 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
               setState(() {
                 _isEditing = false;
                 _photoUrl = context.read<ProfileProvider>().profile?.photoUrl;
+                _pendingRemovalUrl = null;
               });
             },
             child: const Text("Cancel"),
@@ -271,9 +271,14 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
   Future<void> _saveProfile(ProfileProvider provider) async {
     final oldProfile = provider.profile;
     if (oldProfile == null) return;
-
-    // Build new profile
-    final updated = oldProfile.copyWith(
+    if (_pendingRemovalUrl != null) {
+      try {
+        await _storageService.deleteFileByUrl(_pendingRemovalUrl!);
+      } catch (e) {
+        debugPrint("Storage deletion error: $e");
+      }
+    }
+    final updatedProfile = oldProfile.copyWith(
       firstName: _firstName,
       lastName: _lastName,
       displayName: _displayName,
@@ -281,7 +286,8 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
       photoUrl: _photoUrl,
     );
     try {
-      await provider.saveProfile(updated);
+      await provider.saveProfile(updatedProfile);
+      _pendingRemovalUrl = null;
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile updated successfully')),
@@ -289,6 +295,7 @@ class _ProfilePageBodyState extends State<ProfilePageBody> {
       }
       setState(() => _isEditing = false);
     } catch (e) {
+      debugPrint("Error saving profile: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error saving profile: $e')),

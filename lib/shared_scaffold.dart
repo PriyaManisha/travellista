@@ -27,6 +27,7 @@ class SharedScaffold extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: titleWidget ?? (title != null ? Text(title!) : null),
+        centerTitle: false,
         actions: actions,
         automaticallyImplyLeading: showBackButton,
       ),
