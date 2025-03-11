@@ -26,6 +26,8 @@
     <string>This app needs access to your photo library so you can upload travel photos to your journal.</string>
     <key>NSCameraUsageDescription</key>
     <string>This app needs camera access so you can take photos for your journal.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>This app needs access to the microphone for voice features.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
