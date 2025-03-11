@@ -203,15 +203,20 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
               final url = imageURLs[index];
               return GestureDetector(
                 onTap: () => _showFullscreenImage(context, url),
-                child: Image.network(
-                  url,
-                  width: 100,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, progress) {
-                    if (progress == null) return child;
-                    return const Center(child: CircularProgressIndicator());
-                  },
-                ),
+                child: Container(
+                  decoration:BoxDecoration(
+                      border:Border.all(color:Colors.deepPurple, width:3)
+                  ),
+                  child:Image.network(
+                    url,
+                    width: 100,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, progress) {
+                      if (progress == null) return child;
+                      return const Center(child: CircularProgressIndicator());
+                    },
+                  ),
+                )
               );
             },
           ),
@@ -236,10 +241,15 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                 maxScale: 4.0,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    imageUrl,
-                    fit: BoxFit.contain,
-                  ),
+                  child:Container(
+                    decoration:BoxDecoration(
+                      border:Border.all(color:Colors.deepPurple, width:3)
+                    ),
+                    child: Image.network(
+                      imageUrl,
+                      fit: BoxFit.contain,
+                    ),
+                  )
                 ),
               ),
               Positioned(

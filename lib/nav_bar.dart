@@ -33,14 +33,14 @@ class NavBar extends StatelessWidget {
       showUnselectedLabels: true,
       showSelectedLabels: true,
       selectedItemColor: Theme.of(context).colorScheme.primary,
-      //unselectedItemColor: Theme.of(context).colorScheme.primary,
+      unselectedItemColor: Theme.of(context).colorScheme.secondary,
       items: [
         BottomNavigationBarItem(
           icon: Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [BoxShadow(
-                color: Colors.black54,
+                color: (selectedIndex==0)?Colors.black54:Theme.of(context).colorScheme.primary,
                 blurRadius:4,
                 offset: Offset(4,4)
               )]
@@ -60,10 +60,10 @@ class NavBar extends StatelessWidget {
         ),
         BottomNavigationBarItem(
           icon: Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [ BoxShadow(
-                color: Colors.black54,
+                color: (selectedIndex==1)?Colors.black54:Theme.of(context).colorScheme.primary,
                 blurRadius:4,
                 offset: Offset(2,4)
               )]
@@ -83,10 +83,10 @@ class NavBar extends StatelessWidget {
         ),
         BottomNavigationBarItem(
           icon: Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [BoxShadow(
-                color: Colors.black54,
+                color: (selectedIndex==2)?Colors.black54:Theme.of(context).colorScheme.primary,
                 blurRadius:4,
                 offset: Offset(-2,4)
               )]
@@ -106,10 +106,10 @@ class NavBar extends StatelessWidget {
         ),
         BottomNavigationBarItem(
           icon: Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [BoxShadow(
-                color: Colors.black54,
+                color: (selectedIndex==3)?Colors.black54:Theme.of(context).colorScheme.primary,
                 blurRadius:4,
                 offset: Offset(-4,4)
               )]

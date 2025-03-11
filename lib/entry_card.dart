@@ -45,29 +45,34 @@ class EntryCard extends StatelessWidget {
     if (entry.imageURLs != null && entry.imageURLs!.isNotEmpty) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(8.0),
-        child: Image.network(
-          entry.imageURLs![0],
-          width: double.infinity,
-          height: 100,
-          fit: BoxFit.cover,
-          loadingBuilder: (context, child, progress) {
-            if (progress == null) return child;
-            return Container(
-              width: double.infinity,
-              height: 100,
-              color: Colors.grey.shade200,
-              child: const Center(child: CircularProgressIndicator()),
-            );
-          },
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              width: double.infinity,
-              height: 100,
-              color: Colors.grey.shade200,
-              child: const Icon(Icons.error, size: 50, color: Colors.grey),
-            );
-          },
-        ),
+        child: Container(
+          decoration:BoxDecoration(
+            border:Border.all(color:Colors.deepPurple, width:3)
+          ),
+          child:Image.network(
+            entry.imageURLs![0],
+            width: double.infinity,
+            height: 100,
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, progress) {
+              if (progress == null) return child;
+              return Container(
+                width: double.infinity,
+                height: 100,
+                color: Colors.grey.shade200,
+                child: const Center(child: CircularProgressIndicator()),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                width: double.infinity,
+                height: 100,
+                color: Colors.grey.shade200,
+                child: const Icon(Icons.error, size: 50, color: Colors.grey),
+              );
+            },
+          ),
+        )
       );
     } else {
       return Container(
